@@ -1,0 +1,21 @@
+docs
+node_modules
+.env
+coverage
+coverage.json
+typechain-types
+yarn-error.log
+
+#Hardhat files
+artifacts/
+hh-cache/
+
+
+# Foundry
+cache
+out
+
+.DS_Store
+
+# VScode
+.vscode

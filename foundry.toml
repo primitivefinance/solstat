@@ -1,0 +1,24 @@
+[default]
+via_ir = true
+src = 'contracts'
+out = 'out'
+libs = ['lib', 'node_modules']
+test = 'test/foundry'
+remappings = [
+    'ds-test=lib/ds-test/src/',
+    'forge-std=lib/forge-std/src/',
+    'contracts/=contracts/',
+]
+optimizer_runs = 15000
+fuzz_runs = 7500
+
+[optimized]
+solc = '0.8.13'
+out = 'optimized-out'
+
+[test]
+solc = '0.8.13'
+via_ir = false
+src = 'test/foundry'
+
+# See more config options https://github.com/gakonst/foundry/tree/master/config

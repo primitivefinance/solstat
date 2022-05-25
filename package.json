@@ -1,0 +1,74 @@
+{
+  "name": "hardhat-foundry",
+  "version": "0.0.1",
+  "description": "Forkable Hardhat & Foundry template with Primitive flavors.",
+  "scripts": {
+    "build": "hardhat compile --config ./hardhat.config.ts",
+    "test": "hardhat test --config ./hardhat.config.ts",
+    "test:forge": "FOUNDRY_PROFILE=optimized forge build; FOUNDRY_PROFILE=test forge test -vvv",
+    "profile": "REPORT_GAS=true hardhat test --config ./hardhat.config.ts",
+    "coverage": "hardhat coverage --config ./hardhat-coverage.config.ts --solcoverjs ./config/.solcover.js",
+    "lint:check": "prettier --check **.sol && prettier --check **.js && prettier --check **.ts && hardhat compile --config ./hardhat.config.ts",
+    "lint:fix": "prettier --write **.sol && prettier --write **.js && prettier --write **.ts",
+    "prepare": "husky install"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/primitivefinance/hardhat-foundry.git"
+  },
+  "keywords": [
+    "hardhat",
+    "solidity",
+    "primitive",
+    "foundry"
+  ],
+  "author": "Primitive",
+  "license": "GPL-3.0-or-later",
+  "bugs": {
+    "url": "https://github.com/primitivefinance/hardhat-foundry/issues"
+  },
+  "homepage": "https://github.com/primitivefinance/hardhat-foundry#readme",
+  "devDependencies": {
+    "@nomiclabs/hardhat-ethers": "^2.0.5",
+    "@nomiclabs/hardhat-waffle": "^2.0.3",
+    "@primitivefi/hardhat-dodoc": "^0.2.3",
+    "@types/chai": "^4.3.1",
+    "@types/mocha": "^9.1.0",
+    "@types/node": "^17.0.24",
+    "chai": "^4.3.6",
+    "dotenv": "^16.0.0",
+    "ethereum-waffle": "^3.4.4",
+    "ethers": "^5.6.4",
+    "hardhat": "^2.9.3",
+    "hardhat-gas-reporter": "^1.0.8",
+    "husky": ">=6",
+    "lint-staged": ">=10",
+    "prettier": "2.6.2",
+    "prettier-plugin-solidity": "^1.0.0-beta.19",
+    "solidity-coverage": "^0.7.21",
+    "ts-node": "^10.7.0",
+    "typescript": "^4.6.3"
+  },
+  "engines": {
+    "node": ">=16.0.0"
+  },
+  "lint-staged": {
+    "*.sol": "prettier --write",
+    "*.js": "prettier --write",
+    "*.ts": "prettier --write"
+  },
+  "dependencies": {
+    "@typechain/ethers-v5": "^10.0.0",
+    "@typechain/hardhat": "^6.0.0",
+    "typechain": "^8.0.0"
+  },
+  "private": "false",
+  "resolutions": {
+    "async": ">=2.6.4",
+    "cross-fetch": ">=3.1.5",
+    "lodash": ">=4.17.21",
+    "node-fetch": ">=2.6.7",
+    "underscore": ">=1.12.1",
+    "yargs-parser": ">=5.0.1"
+  }
+}
