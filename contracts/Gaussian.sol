@@ -22,7 +22,7 @@ library Gaussian {
      * @custom:epsilon Fractional error less than 1.2e-7.
      * @custom:source Numerical Recipes in C 2e p221
      */
-    function erfc(Model memory model, Fixed18 input)
+    function erfc(Model memory model, Fixed256x18 input)
         internal
         pure
         returns (uint256 output)

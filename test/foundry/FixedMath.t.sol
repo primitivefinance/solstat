@@ -3,44 +3,49 @@ pragma solidity 0.8.13;
 
 import "forge-std/Test.sol";
 
-import "../../contracts/SMath.sol";
+import "../../contracts/FixedMath.sol";
 
 contract TestRaw is Test {
     function testAbs() public logs_gas {
-        SMath.rawAbs(1);
-        SMath.rawAbs(-1);
+        FixedMath.rawAbs(1);
+        FixedMath.rawAbs(-1);
     }
 }
 
-Fixed18 constant v = Fixed18.wrap(-1);
+Fixed256x18 constant v = Fixed256x18.wrap(-1);
 
 contract TestSMath is Test {
+    function testMax() public {
+        int256 maxInt = type(int256).max;
+        console.logInt(maxInt);
+    }
+
     function abs(int256 x) public returns (UFixed18) {
-        return SMath.abs(Fixed18.wrap(x));
+        return FixedMath.abs(Fixed256x18.wrap(x));
     }
 
     function absUnchecked(int256 x) public returns (UFixed18) {
-        return SMath.absUnchecked(Fixed18.wrap(x));
+        return FixedMath.absUnchecked(Fixed256x18.wrap(x));
     }
 
     function rawAbs(int256 x) public returns (uint256) {
-        return SMath.rawAbs(x);
+        return FixedMath.rawAbs(x);
     }
 
     function testRaw() public logs_gas {
-        //SMath.rawAbs(1);
-        SMath.rawAbs(-1);
+        //FixedMath.rawAbs(1);
+        FixedMath.rawAbs(-1);
     }
 
     function testAbs() public logs_gas {
-        //SMath.abs(Fixed18.wrap(1));
-        //SMath.abs(Fixed18.wrap(-1));
-        SMath.abs(v);
+        //FixedMath.abs(Fixed256x18.wrap(1));
+        //FixedMath.abs(Fixed256x18.wrap(-1));
+        FixedMath.abs(v);
     }
 
     function testAbs02() public {
-        SMath.absUnchecked(Fixed18.wrap(1));
-        SMath.absUnchecked(Fixed18.wrap(-1));
+        FixedMath.absUnchecked(Fixed256x18.wrap(1));
+        FixedMath.absUnchecked(Fixed256x18.wrap(-1));
     }
 
     function testAbsFuzz(int256 z) public {
@@ -62,9 +67,9 @@ contract TestSMath is Test {
 
     function testUnwrap() public {
         int256 initial = -15;
-        Fixed18 value = Fixed18.wrap(initial);
-        int256 actual = Types.assembly_unwrap(value);
-        int256 expected = Fixed18.unwrap(value);
+        Fixed256x18 value = Fixed256x18.wrap(initial);
+        int256 actual = FixedNumber.assembly_unwrap(value);
+        int256 expected = Fixed256x18.unwrap(value);
         assertEq(actual, expected);
         assertEq(actual, initial);
     }

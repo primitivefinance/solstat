@@ -1,7 +1,7 @@
 // SPDX-License-Identifier: MIT
 pragma solidity 0.8.13;
 
-import "./Types.sol";
+import "./FixedNumber.sol";
 
 /**
  * @title Gaussian Constants.
