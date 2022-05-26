@@ -14,6 +14,7 @@ hh-cache/
 # Foundry
 cache
 out
+optimized-out
 
 .DS_Store
 
