@@ -1,5 +1,5 @@
 {
-  "name": "hardhat-foundry",
+  "name": "solstat",
   "version": "0.0.1",
   "description": "Forkable Hardhat & Foundry template with Primitive flavors.",
   "scripts": {
@@ -14,7 +14,7 @@
   },
   "repository": {
     "type": "git",
-    "url": "git+https://github.com/primitivefinance/hardhat-foundry.git"
+    "url": "git+https://github.com/primitivefinance/solstat.git"
   },
   "keywords": [
     "hardhat",
@@ -25,9 +25,9 @@
   "author": "Primitive",
   "license": "GPL-3.0-or-later",
   "bugs": {
-    "url": "https://github.com/primitivefinance/hardhat-foundry/issues"
+    "url": "https://github.com/primitivefinance/solstat/issues"
   },
-  "homepage": "https://github.com/primitivefinance/hardhat-foundry#readme",
+  "homepage": "https://github.com/primitivefinance/solstat#readme",
   "devDependencies": {
     "@nomiclabs/hardhat-ethers": "^2.0.5",
     "@nomiclabs/hardhat-waffle": "^2.0.3",

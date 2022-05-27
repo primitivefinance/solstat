@@ -4,9 +4,10 @@ pragma solidity 0.8.13;
 import "./FixedNumber.sol";
 
 /**
- * @title Solidity Math.
+ * @title Fixed Number Math Library.
  * @author alexangelj
- * @dev Basic arithmetic for the types supported by these libraries.
+ * @dev Math functions for the signed Fixed256x18 type in FixedNumber.sol.
+ * @custom:source
  */
 library FixedMath {
     using FixedNumber for Fixed256x18;
@@ -19,22 +20,19 @@ library FixedMath {
 
     error Min();
 
-    function rawAbs(int256 input) internal pure returns (uint256 output) {
-        if (input == MIN_INT) revert Min();
-
-        if (input < ZERO) {
-            assembly {
-                output := add(not(input), 1)
-            }
-        } else {
-            assembly {
-                output := input
-            }
-        }
-    }
-
-    function abs(Fixed256x18 input) internal pure returns (UFixed18 output) {
-        if (Fixed256x18.unwrap(input) == MIN_INT) revert Min();
+    /**
+     * @dev If `input` is negative, the `not` opcode is used to invert it and `1` is added to the result.
+     * The `unary` operator is equivalent to this operation.
+     * Reverts if `input` is the minimum value of the int256 type.
+     *
+     * @return output `input` as a non-negative (unsigned) fixed point number.
+     */
+    function abs(Fixed256x18 input)
+        internal
+        pure
+        returns (UFixed256x18 output)
+    {
+        if (input.eq(MIN_INT)) revert Min();
 
         if (input.lt(ZERO)) {
             assembly {
@@ -47,23 +45,15 @@ library FixedMath {
         }
     }
 
-    function absUnchecked(Fixed256x18 input)
+    function sqrt(Fixed256x18 input, int256 y)
         internal
         pure
-        returns (UFixed18 output)
-    {
-        if (Fixed256x18.unwrap(input) == type(int128).min) revert Min();
+        returns (Fixed256x18 output)
+    {}
 
-        unchecked {
-            output = UFixed18.wrap(
-                uint256(
-                    Fixed256x18.unwrap(
-                        input.gte(0)
-                            ? input
-                            : Fixed256x18.wrap(-Fixed256x18.unwrap(input))
-                    )
-                )
-            );
-        }
-    }
+    function exp(Fixed256x18 input)
+        internal
+        pure
+        returns (Fixed256x18 output)
+    {}
 }

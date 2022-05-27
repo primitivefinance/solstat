@@ -37,4 +37,13 @@ contract TestFixedNumber is Test {
         bool expected = initial < 0;
         assertEq(actual, expected);
     }
+
+    function testUnwrap() public {
+        int256 initial = -15;
+        Fixed256x18 value = Fixed256x18.wrap(initial);
+        int256 actual = FixedNumber.assembly_unwrap(value);
+        int256 expected = Fixed256x18.unwrap(value);
+        assertEq(actual, expected);
+        assertEq(actual, initial);
+    }
 }

@@ -1,14 +1,14 @@
 // SPDX-License-Identifier: MIT
 pragma solidity 0.8.13;
 
-type UFixed18 is uint256; // 60 digits . 18 digits
+type UFixed256x18 is uint256; // 60 digits . 18 digits
 type Fixed256x18 is int256; // 1 digit sign 59 digits . 18 digits
 
 /**
  * @title Fixed Number Library.
  * @author alexangej
  *
- * @notice A 256-bit wide number with 18 decimals (decimals after binary point position) of precision.
+ * @notice A 256-bit wide signed integer with 18 decimals (decimals after binary point position) of precision.
  * Fixed point numbers are useful because they inherit native arithmetic available in the evm,
  * while being able to represent a fractional part in the least significant digits (18 in this case).
  *
@@ -19,6 +19,15 @@ type Fixed256x18 is int256; // 1 digit sign 59 digits . 18 digits
  * @custom:source https://inst.eecs.berkeley.edu/~cs61c/sp06/handout/fixedpt.html
  */
 library FixedNumber {
+    // --- Constants --- //
+
+    int256 internal constant LOG2_E = 1_442695040888963407;
+    int256 internal constant NATURAL_E = 2_718281828459045235;
+
+    uint256 internal constant PI = 3_141592653589793238;
+    uint256 internal constant SCALAR = 1e18; // 1.0
+    uint256 internal constant HALF_SCALAR = 5e17; // 0.5
+
     function assembly_unwrap(Fixed256x18 x) internal pure returns (int256 y) {
         assembly {
             y := x
