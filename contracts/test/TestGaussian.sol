@@ -1,0 +1,10 @@
+// SPDX-License-Identifier: MIT
+pragma solidity 0.8.13;
+
+import "../Gaussian.sol";
+
+contract TestGaussian {
+    function erfc(int256 input) public view returns (int256) {
+        return Gaussian.erfc(input);
+    }
+}
