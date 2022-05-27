@@ -23,7 +23,9 @@ library Gaussian {
         uint256 variance;
     }
 
+    int256 internal constant HALF_SCALAR = 1e9;
     int256 internal constant SCALAR = 1e18;
+    int256 internal constant HALF = 5e17;
     int256 internal constant ONE = 1e18;
     int256 internal constant TWO = 2e18;
     int256 internal constant ERFC_A = 1_265512230000000000;
@@ -65,6 +67,10 @@ library Gaussian {
         z = muli(x, y, ONE);
     }
 
+    function diviWad(int256 x, int256 y) internal pure returns (int256 z) {
+        z = muli(x, ONE, y);
+    }
+
     /**
      * @notice Approximation of the Complimentary Error Function.
      * @dev
@@ -78,106 +84,58 @@ library Gaussian {
                 uint256(uint256(ONE) + uint256(z).divWadDown(uint256(TWO)))
             )
         );
-        console.logInt(t);
+
         int256 k;
         int256 step0;
+
         {
+            // Avoids stack too deep.
             int256 _t = t;
-            unchecked {
-                step0 = (ERFC_F +
-                    muliWad(
-                        _t,
-                        (ERFC_G +
-                            muliWad(
-                                _t,
-                                (ERFC_H +
-                                    muliWad(_t, (ERFC_I + muliWad(_t, ERFC_J))))
-                            ))
-                    ));
-            }
+
+            step0 = (ERFC_F +
+                muliWad(
+                    _t,
+                    (ERFC_G +
+                        muliWad(
+                            _t,
+                            (ERFC_H +
+                                muliWad(_t, (ERFC_I + muliWad(_t, ERFC_J))))
+                        ))
+                ));
         }
         {
             int256 _t = t;
-            unchecked {
-                k =
-                    int256(-1) *
-                    muliWad(int256(z), int256(z)) -
-                    ERFC_A +
-                    muliWad(
-                        _t,
-                        (ERFC_B +
-                            muliWad(
-                                _t,
-                                (ERFC_C +
-                                    muliWad(
-                                        _t,
-                                        (ERFC_D +
-                                            muliWad(
-                                                _t,
-                                                (ERFC_E + muliWad(_t, step0))
-                                            ))
-                                    ))
-                            ))
-                    );
-            }
-        }
-        /* unchecked {
-                k = (ERFC_A +
-                    muliWad(
-                        _t,
-                        (ERFC_B +
-                            muliWad(
-                                _t,
-                                (ERFC_C +
-                                    muliWad(
-                                        _t,
-                                        (ERFC_D +
-                                            muliWad(
-                                                _t,
-                                                (ERFC_E +
-                                                    muliWad(
-                                                        _t,
-                                                        (ERFC_F +
-                                                            muliWad(
-                                                                _t,
-                                                                (ERFC_G +
-                                                                    muliWad(
-                                                                        _t,
-                                                                        (ERFC_H +
-                                                                            muliWad(
-                                                                                _t,
-                                                                                (ERFC_I +
-                                                                                    muliWad(
-                                                                                        _t,
-                                                                                        ERFC_J
-                                                                                    ))
-                                                                            ))
-                                                                    ))
-                                                            ))
-                                                    ))
-                                            ))
-                                    ))
-                            ))
-                    ));
-            } */
 
-        console.logInt(k);
-
-        int256 znot;
-        assembly {
-            znot := add(not(z), 1)
+            k =
+                int256(-1) *
+                muliWad(int256(z), int256(z)) -
+                ERFC_A +
+                muliWad(
+                    _t,
+                    (ERFC_B +
+                        muliWad(
+                            _t,
+                            (ERFC_C +
+                                muliWad(
+                                    _t,
+                                    (ERFC_D +
+                                        muliWad(
+                                            _t,
+                                            (ERFC_E + muliWad(_t, step0))
+                                        ))
+                                ))
+                        ))
+                );
         }
 
         int256 exp = FixedPointMathLib.expWad(k);
-
-        console.logInt(exp);
-
         int256 r = muliWad(t, exp);
+        output = (input < 0) ? TWO - r : r;
 
+        console.logInt(t);
+        console.logInt(k);
+        console.logInt(exp);
         console.logInt(r);
-
-        output = (input < ONE) ? TWO - r : r;
-
         console.logInt(output);
     }
 
@@ -193,7 +151,32 @@ library Gaussian {
      * @dev
      * @custom:source
      */
-    function cdf() internal pure returns (uint256) {}
+    function cdf(int256 x) internal view returns (int256 z) {
+        int256 sqrt2 = int256(FixedPointMathLib.sqrt(uint256(TWO)));
+        console.logInt(sqrt2);
+        //int256 input = diviWad(x, sqrt2);
+        int256 input;
+        assembly {
+            input := sdiv(mul(SCALAR, x), mul(HALF_SCALAR, sqrt2))
+        }
+
+        console.logInt(input);
+        int256 negated;
+        assembly {
+            negated := add(not(input), 1)
+        }
+        console.logInt(negated);
+
+        console.log("getting erfc");
+        int256 erfc = erfc(negated);
+
+        console.logInt(erfc);
+        assembly {
+            z := sdiv(mul(ONE, erfc), TWO)
+        }
+
+        console.logInt(z);
+    }
 
     /**
      * @notice Approximation of the Probability Density Function.

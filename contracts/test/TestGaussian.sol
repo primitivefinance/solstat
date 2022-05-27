@@ -7,4 +7,8 @@ contract TestGaussian {
     function erfc(int256 input) public view returns (int256) {
         return Gaussian.erfc(input);
     }
+
+    function cdf(int256 input) public view returns (int256) {
+        return Gaussian.cdf(input);
+    }
 }
