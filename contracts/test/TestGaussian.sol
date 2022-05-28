@@ -11,4 +11,8 @@ contract TestGaussian {
     function cdf(int256 input) public view returns (int256) {
         return Gaussian.cdf(input);
     }
+
+    function ierfc(int256 input) public view returns (int256) {
+        return Gaussian.ierfc(input);
+    }
 }

@@ -39,6 +39,13 @@ library Gaussian {
     int256 internal constant ERFC_I = -822152230000000000; // 1e-1
     int256 internal constant ERFC_J = 170872770000000000; // 1e-1
 
+    int256 internal constant IERFC_A = -707110000000000000; // 1e-1
+    int256 internal constant IERFC_B = 2_307530000000000000;
+    int256 internal constant IERFC_C = 270610000000000000; // 1e-1
+    int256 internal constant IERFC_D = 992290000000000000; // 1e-1
+    int256 internal constant IERFC_E = 44810000000000000; // 1e-2
+    int256 internal constant IERFC_F = 1_128379167095512570;
+
     function muli(
         int256 x,
         int256 y,
@@ -132,19 +139,81 @@ library Gaussian {
         int256 r = muliWad(t, exp);
         output = (input < 0) ? TWO - r : r;
 
-        console.logInt(t);
-        console.logInt(k);
-        console.logInt(exp);
-        console.logInt(r);
-        console.logInt(output);
+        //console.logInt(t);
+        //console.logInt(k);
+        //console.logInt(exp);
+        //console.logInt(r);
+        //console.logInt(output);
     }
 
     /**
      * @notice Approximation of the Imaginary Complimentary Error Function.
-     * @dev
+     * @dev Domain is (0, 2)
      * @custom:source Numerical Recipes 3e p265.
      */
-    function ierfc() internal pure returns (uint256) {}
+    function ierfc(int256 x) internal view returns (int256 z) {
+        console.log("enter");
+        assembly {
+            // x >= 2, iszero(x < 2 ? 1 : 0) ? 1 : 0
+            if iszero(slt(x, TWO)) {
+                z := mul(add(not(100), 1), SCALAR)
+            }
+
+            // x <= 0
+            if iszero(sgt(x, 0)) {
+                z := mul(100, SCALAR)
+            }
+        }
+
+        /* if (x >= TWO) return -100 * SCALAR;
+        if (x <= 0) return 100 * SCALAR; */
+        if (z != 0) return z;
+
+        int256 xx = (x < ONE) ? x : TWO - x;
+        int256 ln = FixedPointMathLib.lnWad(diviWad(xx, TWO)); // ln( xx / 2)
+        int256 t = int256(FixedPointMathLib.sqrt(uint256(muliWad(-TWO, ln))));
+        assembly {
+            t := mul(t, HALF_SCALAR)
+        }
+        int256 r;
+
+        {
+            int256 step0 = IERFC_A;
+            int256 step1 = (IERFC_B + muliWad(t, IERFC_C));
+            int256 step2 = (ONE + muliWad(t, (IERFC_D + muliWad(t, IERFC_E))));
+            r = muliWad(step0, diviWad(step1, step2) - t);
+            /* r = muliWad(
+                IERFC_A,
+                (
+                    diviWad(
+                        (IERFC_B + muliWad(t, IERFC_C)),
+                        (ONE + muliWad(t, (IERFC_D + muliWad(t, IERFC_E)))) - t
+                    )
+                )
+            ); */
+        }
+
+        console.logInt(xx);
+        console.logInt(t);
+        console.logInt(r);
+        uint256 i;
+        console.log("loop");
+        while (i < 2) {
+            int256 err = erfc(r) - xx;
+            int256 exp = FixedPointMathLib.expWad(-(muliWad(r, r)));
+            int256 denom = muliWad(IERFC_F, exp) - muliWad(r, err);
+            r += diviWad(err, denom);
+            console.logInt(err);
+            console.logInt(r);
+            unchecked {
+                ++i;
+            }
+        }
+
+        z = x < ONE ? r : -r;
+        console.logInt(r);
+        console.logInt(z);
+    }
 
     /**
      * @notice Approximation of the Cumulative Distribution Function.

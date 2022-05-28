@@ -2,6 +2,7 @@ import hre from 'hardhat'
 import { expect } from 'chai'
 import { formatEther } from 'ethers/lib/utils'
 import gaussian from 'gaussian'
+import { BigNumberish } from 'ethers'
 
 var erfc = function (x) {
   var z = Math.abs(x)
@@ -21,7 +22,6 @@ var erfc = function (x) {
                       (-0.18628806 +
                         t * (0.27886807 + t * (-1.13520398 + t * (1.48851587 + t * (-0.82215223 + t * 0.17087277))))))))
     )
-  console.log({ t, r })
   return x >= 0 ? r : 2 - r
 }
 
@@ -39,6 +39,39 @@ var getInput = function (t, z) {
                   (-0.18628806 +
                     t * (0.27886807 + t * (-1.13520398 + t * (1.48851587 + t * (-0.82215223 + t * 0.17087277))))))))
   )
+}
+
+var ierfc = function (x) {
+  if (x >= 2) {
+    return -100
+  }
+  if (x <= 0) {
+    return 100
+  }
+
+  var xx = x < 1 ? x : 2 - x
+  var t = Math.sqrt(-2 * Math.log(xx / 2))
+
+  var r = -0.70711 * ((2.30753 + t * 0.27061) / (1 + t * (0.99229 + t * 0.04481)) - t)
+  console.log({ xx, t, r })
+
+  for (var j = 0; j < 2; j++) {
+    var err = erfc(r) - xx
+    r += err / (1.12837916709551257 * Math.exp(-(r * r)) - r * err)
+    console.log({ err, r })
+  }
+
+  var output = x < 1 ? r : -r
+  console.log({ r, output })
+  return output
+}
+
+function parse(x: number): bigint {
+  return BigInt(x * 1e18)
+}
+
+function format(x: BigNumberish | bigint): number {
+  return +formatEther(x)
 }
 
 describe('Gaussian', function () {
@@ -95,5 +128,21 @@ describe('Gaussian', function () {
     const actual = await math.cdf(parsed)
     console.log({ parsed, actual, expected })
     expect(+formatEther(actual)).to.be.closeTo(expected, 1e-10)
+  })
+
+  it.only('gets ierfc', async function () {
+    const math = await (await hre.ethers.getContractFactory('TestGaussian')).deploy()
+    const x = 2
+    let actual = await math.ierfc(parse(x))
+    expect(format(actual)).to.eq(-100)
+    actual = await math.ierfc(parse(0))
+    expect(format(actual)).to.eq(100)
+
+    const z = 0.5
+    const input = 2 * z
+    const expected = ierfc(input)
+    actual = await math.ierfc(parse(input))
+    console.log({ actual, expected })
+    expect(format(actual)).to.closeTo(expected, 1e-17)
   })
 })
