@@ -15,6 +15,7 @@ import "@rari-capital/solmate/src/utils/FixedPointMathLib.sol";
 library Gaussian {
     using FixedMath for int256;
     using FixedMath for Fixed256x18;
+    using FixedPointMathLib for int256;
     using FixedPointMathLib for uint256;
 
     int256 internal constant SIGN = -1;
@@ -24,6 +25,7 @@ library Gaussian {
     int256 internal constant HALF = 5e17;
     int256 internal constant ONE = 1e18;
     int256 internal constant TWO = 2e18;
+    int256 internal constant NEGATIVE_TWO = -2e18;
     int256 internal constant SQRT2 = 1_414213562373095048;
     int256 internal constant ERFC_A = 1_265512230000000000;
     int256 internal constant ERFC_B = 1_000023680000000000;
@@ -59,8 +61,8 @@ library Gaussian {
             let den := add(ONE, quo)
             t := sdiv(SCALAR_SQRD, den) // 1e18 * 1e18 / denominator
 
-            function muli(x, y) -> res {
-                res := sdiv(mul(x, y), ONE)
+            function muli(pxn, pxd) -> res {
+                res := sdiv(mul(pxn, pxd), ONE)
             }
 
             {
@@ -106,61 +108,6 @@ library Gaussian {
             k := add(sub(mul(SIGN, muli(z, z)), ERFC_A), step)
         }
 
-        //k = (SIGN * muliWad(int256(z), int256(z)) - ERFC_A) + step0;
-
-        /* {
-            // Avoids stack too deep.
-            int256 _t = t;
-
-            step0 = (ERFC_F +
-                muliWad(
-                    _t,
-                    (ERFC_G +
-                        muliWad(
-                            _t,
-                            (ERFC_H +
-                                muliWad(_t, (ERFC_I + muliWad(_t, ERFC_J))))
-                        ))
-                ));
-        } */
-        {
-            int256 _t = t;
-            /* int256 yeet = muliWad(
-                _t,
-                (ERFC_B +
-                    muliWad(
-                        _t,
-                        (ERFC_C +
-                            muliWad(
-                                _t,
-                                (ERFC_D +
-                                    muliWad(_t, (ERFC_E + muliWad(_t, step0))))
-                            ))
-                    ))
-            );
-            k = int256(SIGN) * muliWad(int256(z), int256(z)) - ERFC_A + yeet; */
-            /* k =
-                int256(SIGN) *
-                muliWad(int256(z), int256(z)) -
-                ERFC_A +
-                muliWad(
-                    _t,
-                    (ERFC_B +
-                        muliWad(
-                            _t,
-                            (ERFC_C +
-                                muliWad(
-                                    _t,
-                                    (ERFC_D +
-                                        muliWad(
-                                            _t,
-                                            (ERFC_E + muliWad(_t, step0))
-                                        ))
-                                ))
-                        ))
-                ); */
-        }
-
         int256 expWad = FixedPointMathLib.expWad(k);
         int256 r;
         assembly {
@@ -173,9 +120,6 @@ library Gaussian {
                 output := r
             }
         }
-
-        //int256 r = muliWad(t, exp);
-        //output = (input < 0) ? TWO - r : r;
     }
 
     /**
@@ -198,33 +142,94 @@ library Gaussian {
 
         if (z != 0) return z;
 
-        int256 xx = (x < ONE) ? x : TWO - x;
+        int256 xx; // = (x < ONE) ? x : TWO - x;
+        assembly {
+            switch iszero(slt(x, ONE))
+            case 0 {
+                xx := x
+            }
+            case 1 {
+                xx := sub(TWO, x)
+            }
+        }
+
         int256 ln = FixedPointMathLib.lnWad(diviWad(xx, TWO)); // ln( xx / 2)
-        int256 t = int256(FixedPointMathLib.sqrt(uint256(muliWad(-TWO, ln))));
+        int256 t = muliWad(NEGATIVE_TWO, ln).sqrt(); //int256(FixedPointMathLib.sqrt(uint256(muliWad(-TWO, ln))));
         assembly {
             t := mul(t, HALF_SCALAR)
         }
         int256 r;
 
-        {
-            int256 step0 = IERFC_A;
+        /* {
             int256 step1 = (IERFC_B + muliWad(t, IERFC_C));
             int256 step2 = (ONE + muliWad(t, (IERFC_D + muliWad(t, IERFC_E))));
-            r = muliWad(step0, diviWad(step1, step2) - t);
+            r = muliWad(IERFC_A, diviWad(step1, step2) - t);
+        } */
+
+        assembly {
+            function muli(pxn, pxd) -> res {
+                res := sdiv(mul(pxn, pxd), ONE)
+            }
+
+            r := muli(
+                IERFC_A,
+                sub(
+                    sdiv(
+                        mul(add(IERFC_B, muli(t, IERFC_C)), ONE),
+                        add(ONE, muli(t, add(IERFC_D, muli(t, IERFC_E))))
+                    ),
+                    t
+                )
+            )
         }
 
-        uint256 i;
-        while (i < 2) {
-            int256 err = erfc(r) - xx;
-            int256 exp = FixedPointMathLib.expWad(-(muliWad(r, r)));
-            int256 denom = muliWad(IERFC_F, exp) - muliWad(r, err);
-            r += diviWad(err, denom);
-            unchecked {
-                ++i;
+        uint256 itr;
+        while (itr < 2) {
+            int256 err = erfc(r); //  = erfc(r) - xx;
+            assembly {
+                err := sub(err, xx)
+            }
+
+            int256 input; // -(muliWad(r, r))
+            assembly {
+                input := add(not(sdiv(mul(r, r), ONE)), 1)
+            }
+
+            int256 expWad = input.expWad(); //  = FixedPointMathLib.expWad(-(muliWad(r, r)));
+
+            //int256 denom = muliWad(IERFC_F, expWad) - muliWad(r, err);
+            //r += diviWad(err, denom);
+            //unchecked {
+            //    ++itr;
+            //}
+
+            assembly {
+                function muli(pxn, pxd) -> res {
+                    res := sdiv(mul(pxn, pxd), ONE)
+                }
+
+                r := add(
+                    r,
+                    sdiv(
+                        mul(err, ONE),
+                        sub(muli(IERFC_F, expWad), muli(r, err))
+                    )
+                )
+
+                itr := add(itr, 1)
             }
         }
 
-        z = x < ONE ? r : -r;
+        // z = x < ONE ? r : -r;
+        assembly {
+            switch iszero(slt(x, ONE))
+            case 0 {
+                z := r
+            }
+            case 1 {
+                z := add(not(r), 1)
+            }
+        }
     }
 
     /**
