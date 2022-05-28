@@ -5,14 +5,12 @@ import "./GaussianConstants.sol";
 import "./FixedMath.sol";
 import "@rari-capital/solmate/src/utils/FixedPointMathLib.sol";
 
-import "hardhat/console.sol";
-
 /**
  * @title Gaussian Math Library
  * @author alexangelj
  * @dev Models the normal distribution.
  * @custom:coauthor
- * @custom:source Inspired by https://github.com/errcw/gaussian.
+ * @custom:source Inspired by https://github.com/errcw/gaussian
  */
 library Gaussian {
     using FixedMath for Fixed256x18;
@@ -106,12 +104,6 @@ library Gaussian {
         int256 exp = FixedPointMathLib.expWad(k);
         int256 r = muliWad(t, exp);
         output = (input < 0) ? TWO - r : r;
-
-        //console.logInt(t);
-        //console.logInt(k);
-        //console.logInt(exp);
-        //console.logInt(r);
-        //console.logInt(output);
     }
 
     /**
@@ -120,7 +112,6 @@ library Gaussian {
      * @custom:source Numerical Recipes 3e p265.
      */
     function ierfc(int256 x) internal view returns (int256 z) {
-        console.log("enter");
         assembly {
             // x >= 2, iszero(x < 2 ? 1 : 0) ? 1 : 0
             if iszero(slt(x, TWO)) {
@@ -161,26 +152,18 @@ library Gaussian {
             ); */
         }
 
-        console.logInt(xx);
-        console.logInt(t);
-        console.logInt(r);
         uint256 i;
-        console.log("loop");
         while (i < 2) {
             int256 err = erfc(r) - xx;
             int256 exp = FixedPointMathLib.expWad(-(muliWad(r, r)));
             int256 denom = muliWad(IERFC_F, exp) - muliWad(r, err);
             r += diviWad(err, denom);
-            console.logInt(err);
-            console.logInt(r);
             unchecked {
                 ++i;
             }
         }
 
         z = x < ONE ? r : -r;
-        console.logInt(r);
-        console.logInt(z);
     }
 
     /**
@@ -190,29 +173,22 @@ library Gaussian {
      */
     function cdf(int256 x) internal view returns (int256 z) {
         int256 sqrt2 = int256(FixedPointMathLib.sqrt(uint256(TWO)));
-        console.logInt(sqrt2);
         //int256 input = diviWad(x, sqrt2);
         int256 input;
         assembly {
             input := sdiv(mul(SCALAR, x), mul(HALF_SCALAR, sqrt2))
         }
 
-        console.logInt(input);
         int256 negated;
         assembly {
             negated := add(not(input), 1)
         }
-        console.logInt(negated);
 
-        console.log("getting erfc");
         int256 erfc = erfc(negated);
 
-        console.logInt(erfc);
         assembly {
             z := sdiv(mul(ONE, erfc), TWO)
         }
-
-        console.logInt(z);
     }
 
     /**

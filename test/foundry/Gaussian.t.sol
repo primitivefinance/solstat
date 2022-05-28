@@ -24,4 +24,12 @@ contract TestGaussian is Test {
         emit log_int(actual);
         assertEq(actual, expected);
     }
+
+    function testDiffERFC() public {
+        string[] memory cmds = new string[](8);
+        cmds[0] = "npx";
+        cmds[1] = "hardhat";
+        cmds[2] = "run";
+        cmds[3] = "";
+    }
 }

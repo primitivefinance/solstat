@@ -1,0 +1,21 @@
+{
+  "name": "solstat-differential",
+  "version": "1.0.0",
+  "description": "Scripts to perform solidity/ts gaussian testing.",
+  "main": "generate.ts",
+  "author": "",
+  "license": "MIT",
+  "dependencies": {
+    "ethereumjs-util": "^7.1.4",
+    "ethers": "^5.6.4",
+    "rlp": "^3.0.0"
+  },
+  "devDependencies": {
+    "typescript": "^4.6.3"
+  },
+  "scripts": {
+    "compile": "npx tsc --esModuleInterop ./*.ts",
+    "generate-erfc": "node generate_erfc.js",
+    "generate-erfc-129": "node generate_erfc.js"
+  }
+}
