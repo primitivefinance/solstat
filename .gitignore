@@ -14,8 +14,13 @@ hh-cache/
 # Foundry
 cache
 out
+optimized-out
 
 .DS_Store
 
 # VScode
 .vscode
+
+# Differential testing
+test/differential/data
+test/differential/scripts/node_modules
