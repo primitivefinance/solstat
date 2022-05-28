@@ -15,6 +15,7 @@
   },
   "scripts": {
     "compile": "npx tsc --esModuleInterop ./*.ts",
+    "generate": "node generate.js",
     "generate-erfc": "node generate_erfc.js",
     "generate-erfc-129": "node generate_erfc.js"
   }

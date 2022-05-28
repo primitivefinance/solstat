@@ -9,25 +9,11 @@ contract DifferentialTests is Test {
     int256[129] _inputs;
     int256[129] _outputs;
 
-    function setUp() public {}
-
-    function loadOutputs() public {
-        string[] memory loadJsDataOutputs = new string[](2);
-        loadJsDataOutputs[0] = "cat";
-        loadJsDataOutputs[1] = "test/differential/data/output";
-        bytes memory result = vm.ffi(loadJsDataOutputs);
-        _outputs = abi.decode(result, (int256[129]));
+    function setUp() public {
+        generate();
     }
 
-    function loadInputs() public {
-        string[] memory loadJsDataInputs = new string[](2);
-        loadJsDataInputs[0] = "cat";
-        loadJsDataInputs[1] = "test/differential/data/input";
-        bytes memory loadResult = vm.ffi(loadJsDataInputs);
-        _inputs = abi.decode(loadResult, (int256[129]));
-    }
-
-    function testSolERFCMatchesTsERFc() public {
+    function generate() public {
         // Run the reference implementation in javascript
         string[] memory runJsInputs = new string[](6);
         runJsInputs[0] = "npm";
@@ -35,7 +21,63 @@ contract DifferentialTests is Test {
         runJsInputs[2] = "differential/scripts/";
         runJsInputs[3] = "--silent";
         runJsInputs[4] = "run";
+        runJsInputs[5] = "generate"; // Generates length 129 by default
+        vm.ffi(runJsInputs);
+    }
+
+    function load(string memory key)
+        public
+        returns (int256[129] memory inputs, int256[129] memory outputs)
+    {
+        string[] memory cmds = new string[](2);
+        // Get inputs.
+        cmds[0] = "cat";
+        cmds[1] = string(
+            abi.encodePacked("test/differential/data/", key, "/input")
+        );
+        bytes memory result = vm.ffi(cmds);
+        inputs = abi.decode(result, (int256[129]));
+        _inputs = inputs;
+        // Get outputs.
+        cmds[0] = "cat";
+        cmds[1] = string(
+            abi.encodePacked("test/differential/data/", key, "/output")
+        );
+        result = vm.ffi(cmds);
+        outputs = abi.decode(result, (int256[129]));
+        _outputs = outputs;
+    }
+
+    function loadOutputs(string memory key) public {
+        /* string[] memory loadJsDataOutputs = new string[](2);
+        loadJsDataOutputs[0] = "cat";
+        loadJsDataOutputs[1] = "test/differential/data/output";
+        bytes memory result = vm.ffi(loadJsDataOutputs);
+        _outputs = abi.decode(result, (int256[129])); */
+    }
+
+    function loadInputs(string memory key) public {
+        /* string[] memory loadJsDataInputs = new string[](2);
+        loadJsDataInputs[0] = "cat";
+        loadJsDataInputs[1] = abi.encodePacked(
+            "test/differential/data/",
+            key,
+            "/input"
+        );
+        bytes memory loadResult = vm.ffi(loadJsDataInputs);
+        _inputs = abi.decode(loadResult, (int256[129])); */
+    }
+
+    function testDifferentialERFC() public {
+        /* // Run the reference implementation in javascript
+        string[] memory runJsInputs = new string[](6);
+        runJsInputs[0] = "npm";
+        runJsInputs[1] = "--prefix";
+        runJsInputs[2] = "differential/scripts/";
+        runJsInputs[3] = "--silent";
+        runJsInputs[4] = "run";
         runJsInputs[5] = "generate-erfc"; // Generates length 129 by default
+        bytes memory jsResult = vm.ffi(runJsInputs);
         loadOutputs();
         loadInputs();
         //bytes memory jsResult = vm.ffi(runJsInputs);
@@ -48,8 +90,8 @@ contract DifferentialTests is Test {
         //loadJsDataInputs[0] = "cat";
         //loadJsDataInputs[1] = "differential_testing/data/input";
         //bytes memory loadResult = vm.ffi(loadJsDataInputs);
-        //data = abi.decode(loadResult, (int256[129]));
-
+        //data = abi.decode(loadResult, (int256[129])); */
+        load("erfc");
         _testERFC();
     }
 

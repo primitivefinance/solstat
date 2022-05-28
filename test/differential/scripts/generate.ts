@@ -91,21 +91,3 @@ for (const i in DIFFERENTIAL_FUNCTIONS) {
   writeInput(encodedIn, key)
   writeOutput(encodedOut, key)
 }
-
-/* var data: string[] = []
-for (var i = 1; i < 130; ++i) {
-  const random = (Math.random() * i) % 2
-  const input = parseEther(Math.floor(random).toString())
-  data.push(input._hex)
-}
-var outputData = data.map((b) => parse(erfc(format(b))))
-
-const encodedOutputs = ethers.utils.defaultAbiCoder.encode(['int256[129]'], [outputData])
-process.stdout.write(encodedOutputs)
-
-const encodedInputs = ethers.utils.defaultAbiCoder.encode(['int256[129]'], [data])
-if (!fs.existsSync('../data/')) {
-  fs.mkdirSync('../data/')
-}
-fs.writeFileSync('../data/output', encodedOutputs)
-fs.writeFileSync('../data/input', encodedInputs) */
