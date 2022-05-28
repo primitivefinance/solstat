@@ -259,5 +259,23 @@ library Gaussian {
      * @dev
      * @custom:source
      */
-    function ppf() internal pure returns (uint256) {}
+    function ppf(int256 x) internal view returns (int256 z) {
+        int256 sqrt2 = int256(FixedPointMathLib.sqrt(uint256(TWO)));
+        assembly {
+            sqrt2 := mul(sqrt2, HALF_SCALAR)
+        }
+
+        int256 double;
+        assembly {
+            double := mul(x, 2)
+        }
+
+        int256 _ierfc = ierfc(double);
+
+        int256 res = muliWad(sqrt2, _ierfc);
+
+        assembly {
+            z := add(1, not(res))
+        }
+    }
 }

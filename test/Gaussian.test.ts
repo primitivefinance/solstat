@@ -130,7 +130,7 @@ describe('Gaussian', function () {
     expect(+formatEther(actual)).to.be.closeTo(expected, 1e-10)
   })
 
-  it.only('gets ierfc', async function () {
+  it('gets ierfc', async function () {
     const math = await (await hre.ethers.getContractFactory('TestGaussian')).deploy()
     const x = 2
     let actual = await math.ierfc(parse(x))
@@ -144,5 +144,35 @@ describe('Gaussian', function () {
     actual = await math.ierfc(parse(input))
     console.log({ actual, expected })
     expect(format(actual)).to.closeTo(expected, 1e-17)
+  })
+
+  it.only('gets ppf', async function () {
+    const math = await (await hre.ethers.getContractFactory('TestGaussian')).deploy()
+    let x = 2
+    let actual = await math.ppf(parse(x))
+    let expected = gaussian(0, 1).ppf(x)
+    expect(format(actual)).to.be.closeTo(expected, 1e-7)
+    x = 0.5
+    actual = await math.ppf(parse(x))
+    expected = gaussian(0, 1).ppf(x)
+    expect(format(actual)).to.be.closeTo(expected, 1e-7)
+    x = 0.1
+    actual = await math.ppf(parse(x))
+    expected = gaussian(0, 1).ppf(x)
+    expect(format(actual)).to.be.closeTo(expected, 1e-7)
+    x = 10
+    actual = await math.ppf(parse(x))
+    expected = gaussian(0, 1).ppf(x)
+    expect(format(actual)).to.be.closeTo(expected, 1e-7)
+
+    x = 2
+    actual = await math.ppf(parse(x))
+    expected = gaussian(0, 1).ppf(x)
+    expect(format(actual)).to.be.closeTo(expected, 1e-7)
+
+    x = 0
+    actual = await math.ppf(parse(x))
+    expected = gaussian(0, 1).ppf(x)
+    expect(format(actual)).to.be.closeTo(expected, 1e-7)
   })
 })
