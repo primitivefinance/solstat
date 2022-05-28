@@ -20,3 +20,6 @@ optimized-out
 
 # VScode
 .vscode
+
+# Differential testing
+test/differential/data

@@ -10,7 +10,8 @@
     "coverage": "hardhat coverage --config ./hardhat-coverage.config.ts --solcoverjs ./config/.solcover.js",
     "lint:check": "prettier --check **.sol && prettier --check **.js && prettier --check **.ts && hardhat compile --config ./hardhat.config.ts",
     "lint:fix": "prettier --write **.sol && prettier --write **.js && prettier --write **.ts",
-    "prepare": "husky install"
+    "prepare": "husky install",
+    "generate": "cd ./test/differential/scripts/ && npm run compile && npm run generate"
   },
   "repository": {
     "type": "git",
