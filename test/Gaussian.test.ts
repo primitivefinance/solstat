@@ -156,10 +156,12 @@ describe('Gaussian', function () {
     actual = await math.ppf(parse(x))
     expected = gaussian(0, 1).ppf(x)
     expect(format(actual)).to.be.closeTo(expected, 1e-7)
+
     x = 0.1
     actual = await math.ppf(parse(x))
     expected = gaussian(0, 1).ppf(x)
     expect(format(actual)).to.be.closeTo(expected, 1e-7)
+
     x = 10
     actual = await math.ppf(parse(x))
     expected = gaussian(0, 1).ppf(x)

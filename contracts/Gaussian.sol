@@ -46,38 +46,6 @@ library Gaussian {
     int256 internal constant IERFC_E = 44810000000000000; // 1e-2
     int256 internal constant IERFC_F = 1_128379167095512570;
 
-    function muli(
-        int256 x,
-        int256 y,
-        int256 denominator
-    ) internal pure returns (int256 z) {
-        assembly {
-            // Store x * y in z for now.
-            z := mul(x, y)
-
-            // Equivalent to require(denominator != 0 && (x == 0 || (x * y) / x == y))
-            if iszero(
-                and(
-                    iszero(iszero(denominator)),
-                    or(iszero(x), eq(sdiv(z, x), y))
-                )
-            ) {
-                revert(0, 0)
-            }
-
-            // Divide z by the denominator.
-            z := sdiv(z, denominator)
-        }
-    }
-
-    function muliWad(int256 x, int256 y) internal pure returns (int256 z) {
-        z = muli(x, y, ONE);
-    }
-
-    function diviWad(int256 x, int256 y) internal pure returns (int256 z) {
-        z = muli(x, ONE, y);
-    }
-
     /**
      * @notice Approximation of the Complimentary Error Function.
      * @dev
