@@ -13,19 +13,18 @@ import "@rari-capital/solmate/src/utils/FixedPointMathLib.sol";
  * @custom:source Inspired by https://github.com/errcw/gaussian
  */
 library Gaussian {
+    using FixedMath for int256;
     using FixedMath for Fixed256x18;
     using FixedPointMathLib for uint256;
 
-    struct Model {
-        uint256 mean;
-        uint256 variance;
-    }
-
-    int256 internal constant HALF_SCALAR = 1e9;
+    int256 internal constant SIGN = -1;
     int256 internal constant SCALAR = 1e18;
+    int256 internal constant HALF_SCALAR = 1e9;
+    int256 internal constant SCALAR_SQRD = 1e36;
     int256 internal constant HALF = 5e17;
     int256 internal constant ONE = 1e18;
     int256 internal constant TWO = 2e18;
+    int256 internal constant SQRT2 = 1_414213562373095048;
     int256 internal constant ERFC_A = 1_265512230000000000;
     int256 internal constant ERFC_B = 1_000023680000000000;
     int256 internal constant ERFC_C = 374091960000000000; // 1e-1
@@ -36,7 +35,6 @@ library Gaussian {
     int256 internal constant ERFC_H = 1_488515870000000000;
     int256 internal constant ERFC_I = -822152230000000000; // 1e-1
     int256 internal constant ERFC_J = 170872770000000000; // 1e-1
-
     int256 internal constant IERFC_A = -707110000000000000; // 1e-1
     int256 internal constant IERFC_B = 2_307530000000000000;
     int256 internal constant IERFC_C = 270610000000000000; // 1e-1
@@ -51,17 +49,66 @@ library Gaussian {
      * @custom:source Numerical Recipes in C 2e p221
      */
     function erfc(int256 input) internal view returns (int256 output) {
-        uint256 z = UFixed256x18.unwrap(Fixed256x18.wrap(input).abs());
-        int256 t = int256(
-            uint256(ONE).divWadDown(
-                uint256(uint256(ONE) + uint256(z).divWadDown(uint256(TWO)))
-            )
-        );
-
+        uint256 z = input.abs();
+        int256 t;
+        int256 step;
         int256 k;
-        int256 step0;
+        assembly {
+            // 1 / (1 + z / 2)
+            let quo := sdiv(mul(z, ONE), TWO)
+            let den := add(ONE, quo)
+            t := sdiv(SCALAR_SQRD, den) // 1e18 * 1e18 / denominator
 
-        {
+            function muli(x, y) -> res {
+                res := sdiv(mul(x, y), ONE)
+            }
+
+            {
+                step := add(
+                    ERFC_F,
+                    muli(
+                        t,
+                        add(
+                            ERFC_G,
+                            muli(
+                                t,
+                                add(
+                                    ERFC_H,
+                                    muli(t, add(ERFC_I, muli(t, ERFC_J)))
+                                )
+                            )
+                        )
+                    )
+                )
+            }
+            {
+                step := muli(
+                    t,
+                    add(
+                        ERFC_B,
+                        muli(
+                            t,
+                            add(
+                                ERFC_C,
+                                muli(
+                                    t,
+                                    add(
+                                        ERFC_D,
+                                        muli(t, add(ERFC_E, muli(t, step)))
+                                    )
+                                )
+                            )
+                        )
+                    )
+                )
+            }
+
+            k := add(sub(mul(SIGN, muli(z, z)), ERFC_A), step)
+        }
+
+        //k = (SIGN * muliWad(int256(z), int256(z)) - ERFC_A) + step0;
+
+        /* {
             // Avoids stack too deep.
             int256 _t = t;
 
@@ -75,12 +122,25 @@ library Gaussian {
                                 muliWad(_t, (ERFC_I + muliWad(_t, ERFC_J))))
                         ))
                 ));
-        }
+        } */
         {
             int256 _t = t;
-
-            k =
-                int256(-1) *
+            /* int256 yeet = muliWad(
+                _t,
+                (ERFC_B +
+                    muliWad(
+                        _t,
+                        (ERFC_C +
+                            muliWad(
+                                _t,
+                                (ERFC_D +
+                                    muliWad(_t, (ERFC_E + muliWad(_t, step0))))
+                            ))
+                    ))
+            );
+            k = int256(SIGN) * muliWad(int256(z), int256(z)) - ERFC_A + yeet; */
+            /* k =
+                int256(SIGN) *
                 muliWad(int256(z), int256(z)) -
                 ERFC_A +
                 muliWad(
@@ -98,12 +158,24 @@ library Gaussian {
                                         ))
                                 ))
                         ))
-                );
+                ); */
         }
 
-        int256 exp = FixedPointMathLib.expWad(k);
-        int256 r = muliWad(t, exp);
-        output = (input < 0) ? TWO - r : r;
+        int256 expWad = FixedPointMathLib.expWad(k);
+        int256 r;
+        assembly {
+            r := sdiv(mul(t, expWad), ONE)
+            switch iszero(slt(input, 0))
+            case 0 {
+                output := sub(TWO, r)
+            }
+            case 1 {
+                output := r
+            }
+        }
+
+        //int256 r = muliWad(t, exp);
+        //output = (input < 0) ? TWO - r : r;
     }
 
     /**
@@ -124,8 +196,6 @@ library Gaussian {
             }
         }
 
-        /* if (x >= TWO) return -100 * SCALAR;
-        if (x <= 0) return 100 * SCALAR; */
         if (z != 0) return z;
 
         int256 xx = (x < ONE) ? x : TWO - x;
@@ -141,15 +211,6 @@ library Gaussian {
             int256 step1 = (IERFC_B + muliWad(t, IERFC_C));
             int256 step2 = (ONE + muliWad(t, (IERFC_D + muliWad(t, IERFC_E))));
             r = muliWad(step0, diviWad(step1, step2) - t);
-            /* r = muliWad(
-                IERFC_A,
-                (
-                    diviWad(
-                        (IERFC_B + muliWad(t, IERFC_C)),
-                        (ONE + muliWad(t, (IERFC_D + muliWad(t, IERFC_E)))) - t
-                    )
-                )
-            ); */
         }
 
         uint256 i;
@@ -172,20 +233,13 @@ library Gaussian {
      * @custom:source
      */
     function cdf(int256 x) internal view returns (int256 z) {
-        int256 sqrt2 = int256(FixedPointMathLib.sqrt(uint256(TWO)));
-        //int256 input = diviWad(x, sqrt2);
-        int256 input;
-        assembly {
-            input := sdiv(mul(SCALAR, x), mul(HALF_SCALAR, sqrt2))
-        }
-
         int256 negated;
         assembly {
-            negated := add(not(input), 1)
+            let res := sdiv(mul(x, ONE), SQRT2)
+            negated := add(not(res), 1)
         }
 
         int256 erfc = erfc(negated);
-
         assembly {
             z := sdiv(mul(ONE, erfc), TWO)
         }
@@ -204,21 +258,14 @@ library Gaussian {
      * @custom:source
      */
     function ppf(int256 x) internal view returns (int256 z) {
-        int256 sqrt2 = int256(FixedPointMathLib.sqrt(uint256(TWO)));
         assembly {
-            sqrt2 := mul(sqrt2, HALF_SCALAR)
+            x := mul(x, 2)
         }
 
-        int256 double;
-        assembly {
-            double := mul(x, 2)
-        }
-
-        int256 _ierfc = ierfc(double);
-
-        int256 res = muliWad(sqrt2, _ierfc);
+        int256 _ierfc = ierfc(x);
 
         assembly {
+            let res := sdiv(mul(SQRT2, _ierfc), ONE)
             z := add(1, not(res))
         }
     }

@@ -2,6 +2,7 @@
 pragma solidity 0.8.13;
 
 import "./FixedNumber.sol";
+import "@rari-capital/solmate/src/utils/FixedPointMathLib.sol";
 
 function muli(
     int256 x,
@@ -74,11 +75,22 @@ library FixedMath {
         }
     }
 
-    function sqrt(Fixed256x18 input, int256 y)
-        internal
-        pure
-        returns (Fixed256x18 output)
-    {}
+    function abs(int256 input) internal pure returns (uint256 output) {
+        if (input == MIN_INT) revert Min();
+        if (input < ZERO) {
+            assembly {
+                output := add(not(input), 1)
+            }
+        } else {
+            assembly {
+                output := input
+            }
+        }
+    }
+
+    function sqrt(int256 input) internal pure returns (int256 output) {
+        return int256(FixedPointMathLib.sqrt(uint256(input)));
+    }
 
     function exp(Fixed256x18 input)
         internal
