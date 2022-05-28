@@ -50,6 +50,7 @@ var ethers_1 = require('ethers')
 var utils_1 = require('ethers/lib/utils')
 var gaussian_extended_1 = require('../../utils/gaussian-extended')
 var gaussian_1 = __importDefault(require('gaussian'))
+var evm_bn_1 = require('evm-bn')
 var cdf = function (x) {
   return (0, gaussian_1['default'])(0, 1).cdf(x)
 }
@@ -57,25 +58,52 @@ var ppf = function (x) {
   return (0, gaussian_1['default'])(0, 1).ppf(x)
 }
 function parse(x) {
-  return (0, utils_1.parseEther)(x.toString())._hex
+  return (0, evm_bn_1.toBn)(x.toString())._hex
 }
 function format(x) {
   return +(0, utils_1.formatEther)(x)
 }
-var DIFFERENTIAL_FUNCTIONS = ['erfc', 'ierfc', 'cdf', 'pdf']
+var DIFFERENTIAL_FUNCTIONS = ['erfc', 'ierfc', 'cdf', 'ppf']
 var COMPUTE_FN_INPUTS = {
   erfc: function (x) {
     if (typeof x === 'undefined') throw new Error('Value '.concat(x, ' is undefined'))
-    return (0, utils_1.parseEther)(Math.floor((Math.random() * x) % 2).toString())._hex
+    return (0, evm_bn_1.toBn)(Math.random().toString())._hex
+  },
+  ierfc: function (x) {
+    if (typeof x === 'undefined') throw new Error('Value '.concat(x, ' is undefined'))
+    return (0, evm_bn_1.toBn)(Math.random().toString())._hex
+  },
+  cdf: function (x) {
+    if (typeof x === 'undefined') throw new Error('Value '.concat(x, ' is undefined'))
+    return (0, evm_bn_1.toBn)(Math.random().toString())._hex
+  },
+  ppf: function (x) {
+    if (typeof x === 'undefined') throw new Error('Value '.concat(x, ' is undefined'))
+    return (0, evm_bn_1.toBn)(Math.random().toString())._hex
   },
 }
 var COMPUTE_FN_OUTPUTS = {
   erfc: function (x) {
     return parse((0, gaussian_extended_1.erfc)(format(x)))
   },
+  ierfc: function (x) {
+    return parse((0, gaussian_extended_1.ierfc)(format(x)))
+  },
+  cdf: function (x) {
+    return parse(cdf(format(x)))
+  },
+  ppf: function (x) {
+    return parse(ppf(format(x)))
+  },
 }
 COMPUTE_FN_INPUTS['erfc'].bind(COMPUTE_FN_INPUTS)
 COMPUTE_FN_OUTPUTS['erfc'].bind(COMPUTE_FN_OUTPUTS)
+COMPUTE_FN_INPUTS['ierfc'].bind(COMPUTE_FN_INPUTS)
+COMPUTE_FN_OUTPUTS['ierfc'].bind(COMPUTE_FN_OUTPUTS)
+COMPUTE_FN_INPUTS['cdf'].bind(COMPUTE_FN_INPUTS)
+COMPUTE_FN_OUTPUTS['cdf'].bind(COMPUTE_FN_OUTPUTS)
+COMPUTE_FN_INPUTS['ppf'].bind(COMPUTE_FN_INPUTS)
+COMPUTE_FN_OUTPUTS['ppf'].bind(COMPUTE_FN_OUTPUTS)
 var DEFAULT_START_INDEX = 1
 var DEFAULT_END_INDEX = 130
 var DEFAULT_ENCODING_TYPE = ['int256[129]']

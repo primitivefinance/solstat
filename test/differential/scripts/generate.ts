@@ -3,6 +3,7 @@ import { BigNumber, ethers } from 'ethers'
 import { formatEther, parseEther } from 'ethers/lib/utils'
 import { erfc, ierfc } from '../../utils/gaussian-extended'
 import gaussian from 'gaussian'
+import { toBn } from 'evm-bn'
 
 const cdf = (x) => {
   return gaussian(0, 1).cdf(x)
@@ -13,20 +14,32 @@ const ppf = (x) => {
 }
 
 function parse(x) {
-  return parseEther(x.toString())._hex
+  return toBn(x.toString())._hex
 }
 
 function format(x) {
   return +formatEther(x)
 }
 
-const DIFFERENTIAL_FUNCTIONS: Key[] = ['erfc', 'ierfc', 'cdf', 'pdf']
-type Key = 'erfc' | 'ierfc' | 'cdf' | 'pdf'
+const DIFFERENTIAL_FUNCTIONS: Key[] = ['erfc', 'ierfc', 'cdf', 'ppf']
+type Key = 'erfc' | 'ierfc' | 'cdf' | 'ppf'
 
 const COMPUTE_FN_INPUTS = {
   erfc: function (x) {
     if (typeof x === 'undefined') throw new Error(`Value ${x} is undefined`)
-    return parseEther(Math.floor((Math.random() * x) % 2).toString())._hex
+    return toBn(Math.random().toString())._hex
+  },
+  ierfc: function (x) {
+    if (typeof x === 'undefined') throw new Error(`Value ${x} is undefined`)
+    return toBn(Math.random().toString())._hex
+  },
+  cdf: function (x) {
+    if (typeof x === 'undefined') throw new Error(`Value ${x} is undefined`)
+    return toBn(Math.random().toString())._hex
+  },
+  ppf: function (x) {
+    if (typeof x === 'undefined') throw new Error(`Value ${x} is undefined`)
+    return toBn(Math.random().toString())._hex
   },
 }
 
@@ -34,10 +47,25 @@ const COMPUTE_FN_OUTPUTS = {
   erfc: function (x) {
     return parse(erfc(format(x)))
   },
+  ierfc: function (x) {
+    return parse(ierfc(format(x)))
+  },
+  cdf: function (x) {
+    return parse(cdf(format(x)))
+  },
+  ppf: function (x) {
+    return parse(ppf(format(x)))
+  },
 }
 
 COMPUTE_FN_INPUTS['erfc'].bind(COMPUTE_FN_INPUTS)
 COMPUTE_FN_OUTPUTS['erfc'].bind(COMPUTE_FN_OUTPUTS)
+COMPUTE_FN_INPUTS['ierfc'].bind(COMPUTE_FN_INPUTS)
+COMPUTE_FN_OUTPUTS['ierfc'].bind(COMPUTE_FN_OUTPUTS)
+COMPUTE_FN_INPUTS['cdf'].bind(COMPUTE_FN_INPUTS)
+COMPUTE_FN_OUTPUTS['cdf'].bind(COMPUTE_FN_OUTPUTS)
+COMPUTE_FN_INPUTS['ppf'].bind(COMPUTE_FN_INPUTS)
+COMPUTE_FN_OUTPUTS['ppf'].bind(COMPUTE_FN_OUTPUTS)
 
 const DEFAULT_START_INDEX = 1
 const DEFAULT_END_INDEX = 130

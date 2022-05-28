@@ -6,12 +6,16 @@ import "../../../contracts/Gaussian.sol";
 
 contract DifferentialTests is Test {
     enum DifferentialFunctions {
-        erfc
+        erfc,
+        ierfc,
+        cdf,
+        ppf
     }
 
     string internal constant DATA_DIR = "test/differential/data/";
-    int256 internal constant EPSILON = 1e3;
+    int256 internal constant EPSILON = 1e5;
 
+    int256 _epsilon;
     int256[129] _inputs;
     int256[129] _outputs;
 
@@ -24,7 +28,7 @@ contract DifferentialTests is Test {
         string[] memory runJsInputs = new string[](6);
         runJsInputs[0] = "npm";
         runJsInputs[1] = "--prefix";
-        runJsInputs[2] = "differential/scripts/";
+        runJsInputs[2] = "test/differential/scripts/";
         runJsInputs[3] = "--silent";
         runJsInputs[4] = "run";
         runJsInputs[5] = "generate"; // Generates length 129 by default
@@ -51,13 +55,40 @@ contract DifferentialTests is Test {
     }
 
     function testDifferentialERFC() public {
+        _epsilon = 1e6;
         load("erfc");
         run(DifferentialFunctions.erfc);
+    }
+
+    function testDifferentialIERFC() public {
+        _epsilon = EPSILON;
+        load("ierfc");
+        run(DifferentialFunctions.ierfc);
+    }
+
+    function testDifferentialCDF() public {
+        _epsilon = 1e11;
+        load("cdf");
+        run(DifferentialFunctions.cdf);
+    }
+
+    function testDifferentialPPF() public {
+        _epsilon = 1e12;
+        load("ppf");
+        run(DifferentialFunctions.ppf);
     }
 
     function run(DifferentialFunctions fn) public {
         if (fn == DifferentialFunctions.erfc) {
             _run(Gaussian.erfc);
+        } else if (fn == DifferentialFunctions.ierfc) {
+            _run(Gaussian.ierfc);
+        } else if (fn == DifferentialFunctions.cdf) {
+            _run(Gaussian.cdf);
+        } else if (fn == DifferentialFunctions.ppf) {
+            _run(Gaussian.ppf);
+        } else {
+            revert();
         }
     }
 
@@ -67,7 +98,7 @@ contract DifferentialTests is Test {
             int256 input = _inputs[i];
             int256 output = _outputs[i];
             int256 computed = method(input);
-            assertEq(computed / EPSILON, output / EPSILON);
+            assertEq(computed / _epsilon, output / _epsilon);
         }
     }
 }
