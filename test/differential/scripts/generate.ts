@@ -4,6 +4,16 @@ import { formatEther, parseEther } from 'ethers/lib/utils'
 import { erfc, ierfc } from '../../utils/gaussian-extended'
 import gaussian from 'gaussian'
 import { toBn } from 'evm-bn'
+import {
+  Args,
+  ArgsBig,
+  parse as parseArgs,
+  format as formatInvariant,
+  formatArgs,
+  getY,
+  getX,
+  invariant,
+} from '../../utils/invariant'
 
 const cdf = (x) => {
   return gaussian(0, 1).cdf(x)
@@ -21,8 +31,10 @@ function format(x) {
   return +formatEther(x)
 }
 
-const DIFFERENTIAL_FUNCTIONS: Key[] = ['erfc', 'ierfc', 'cdf', 'ppf']
-type Key = 'erfc' | 'ierfc' | 'cdf' | 'ppf'
+const DIFFERENTIAL_FUNCTIONS: Key[] = ['erfc', 'ierfc', 'cdf', 'ppf', 'invariant']
+type Key = 'erfc' | 'ierfc' | 'cdf' | 'ppf' | 'invariant'
+
+type ArgsInputs = [bigint, bigint, bigint, bigint]
 
 const COMPUTE_FN_INPUTS = {
   erfc: function (x) {
@@ -41,6 +53,34 @@ const COMPUTE_FN_INPUTS = {
     if (typeof x === 'undefined') throw new Error(`Value ${x} is undefined`)
     return toBn(Math.random().toString())._hex
   },
+  invariant: function (x): InvariantInput {
+    let K = getStrike(x)
+    let o = getSigma(x)
+    let t = getTau(x)
+    let y = parse(getQuote(x))
+    let args = parseArgs({ x, K, o, t })
+    if (typeof x === 'undefined') throw new Error(`Value ${x} is undefined`)
+    let argsArray: ArgsInputs = Object.keys(args).map((key) => args[key] as bigint) as ArgsInputs
+    return [y, ...argsArray]
+  },
+}
+
+type InvariantInput = [string, bigint, bigint, bigint, bigint]
+
+function getQuote(x: number): number {
+  return x % (Math.pow(2, 128) - 1)
+}
+
+function getSigma(x: number): number {
+  return 1 + (x % (Math.pow(2, 24) - 1))
+}
+
+function getStrike(x: number): number {
+  return 1 + (x % (Math.pow(2, 128) - 1))
+}
+
+function getTau(x: number): number {
+  return x % (Math.pow(2, 32) - 1)
 }
 
 const COMPUTE_FN_OUTPUTS = {
@@ -56,6 +96,10 @@ const COMPUTE_FN_OUTPUTS = {
   ppf: function (x) {
     return parse(ppf(format(x)))
   },
+  invariant: function (x: InvariantInput): string {
+    let args = { x: x[1], K: x[2], o: x[3], t: x[4] }
+    return parse(invariant(format(x[0]), formatArgs(args)))
+  },
 }
 
 COMPUTE_FN_INPUTS['erfc'].bind(COMPUTE_FN_INPUTS)
@@ -66,11 +110,14 @@ COMPUTE_FN_INPUTS['cdf'].bind(COMPUTE_FN_INPUTS)
 COMPUTE_FN_OUTPUTS['cdf'].bind(COMPUTE_FN_OUTPUTS)
 COMPUTE_FN_INPUTS['ppf'].bind(COMPUTE_FN_INPUTS)
 COMPUTE_FN_OUTPUTS['ppf'].bind(COMPUTE_FN_OUTPUTS)
+COMPUTE_FN_INPUTS['invariant'].bind(COMPUTE_FN_INPUTS)
+COMPUTE_FN_OUTPUTS['invariant'].bind(COMPUTE_FN_OUTPUTS)
 
 const DEFAULT_START_INDEX = 1
 const DEFAULT_END_INDEX = 130
 const DEFAULT_ENCODING_TYPE = ['int256[129]']
-const encode = (data: string[]) => ethers.utils.defaultAbiCoder.encode(DEFAULT_ENCODING_TYPE, [data])
+const INVARIANT_ENCODING_TYPE = ['uint256[5][129]']
+const encode = (data: string[], encodeType: string[]) => ethers.utils.defaultAbiCoder.encode(encodeType, [data])
 
 function writeInput(data: string, key: string) {
   if (!fs.existsSync(`../data/${key}/`)) {
@@ -113,8 +160,18 @@ for (const i in DIFFERENTIAL_FUNCTIONS) {
     outputs.push(output)
   }
 
-  const encodedIn = encode(inputs)
-  const encodedOut = encode(outputs)
+  let encodingTypes: string[][] = [] // [input encoding, output encoding]
+  switch (key) {
+    case 'invariant':
+      encodingTypes = [INVARIANT_ENCODING_TYPE, DEFAULT_ENCODING_TYPE]
+      break
+    default:
+      encodingTypes = [DEFAULT_ENCODING_TYPE, DEFAULT_ENCODING_TYPE]
+      break
+  }
+
+  const encodedIn = encode(inputs, encodingTypes[0])
+  const encodedOut = encode(outputs, encodingTypes[1])
 
   writeInput(encodedIn, key)
   writeOutput(encodedOut, key)

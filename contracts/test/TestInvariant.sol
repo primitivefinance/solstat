@@ -4,22 +4,15 @@ pragma solidity 0.8.13;
 import "../Invariant.sol";
 
 contract TestInvariant {
-    struct Args {
-        int256 x;
-        int256 K;
-        int256 o;
-        int256 t;
-    }
-
-    function getY(Args memory args) public view returns (int256) {
+    function getY(Invariant.Args memory args) public view returns (uint256) {
         return Invariant.getY(args.x, args.K, args.o, args.t);
     }
 
-    function getX(Args memory args) public view returns (int256) {
+    function getX(Invariant.Args memory args) public view returns (uint256) {
         return Invariant.getX(args.x, args.K, args.o, args.t);
     }
 
-    function invariant(int256 y, Args memory args)
+    function invariant(uint256 y, Invariant.Args memory args)
         public
         view
         returns (int256)

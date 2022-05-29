@@ -19,28 +19,28 @@ library Invariant {
     int256 internal constant HALF_SCALAR = 1e9;
 
     struct Args {
-        int256 x;
-        int256 K;
-        int256 o;
-        int256 t;
+        uint256 x;
+        uint256 K;
+        uint256 o;
+        uint256 t;
     }
 
-    function getY(Args memory args) internal view returns (int256 y) {
+    function getY(Args memory args) internal view returns (uint256 y) {
         y = getY(args.x, args.K, args.o, args.t);
     }
 
-    function getX(Args memory args) internal view returns (int256 x) {
+    function getX(Args memory args) internal view returns (uint256 x) {
         x = getX(args.x, args.K, args.o, args.t);
     }
 
     error Bad();
 
     function getY(
-        int256 x,
-        int256 K,
-        int256 o,
-        int256 t
-    ) internal view returns (int256 y) {
+        uint256 x,
+        uint256 K,
+        uint256 o,
+        uint256 t
+    ) internal view returns (uint256 y) {
         if (t < 0) revert Bad();
         if (t != 0) {
             //int256 sec = diviWad(t, YEAR);
@@ -48,6 +48,8 @@ library Invariant {
 
             int256 sec;
             assembly {
+                // Scales amount of seconds to units of `SCALAR`. The `t` must be in units of `YEAR`.
+                // For example, if `t` == `YEAR`, `sec` will be `SCALAR`, which is equal to one year.
                 sec := sdiv(mul(t, ONE), YEAR)
             }
             int256 vol = sec.sqrt();
@@ -79,12 +81,13 @@ library Invariant {
         } else {
             //y = muliWad(K, ONE - x);
             assembly {
+                // `K` is in SCALAR, ONE - x is in SCALAR, so SCALAR * SCALAR / SCALAR = SCALAR.
                 y := sdiv(mul(K, sub(ONE, x)), ONE)
             }
         }
     }
 
-    function invariant(Args memory args, int256 y)
+    function invariant(Args memory args, uint256 y)
         internal
         view
         returns (int256 k)
@@ -93,27 +96,27 @@ library Invariant {
     }
 
     function invariant(
-        int256 y,
-        int256 x,
-        int256 K,
-        int256 o,
-        int256 t
+        uint256 y,
+        uint256 x,
+        uint256 K,
+        uint256 o,
+        uint256 t
     ) internal view returns (int256 k) {
-        int256 y0 = getY(x, K, o, t);
+        uint256 y0 = getY(x, K, o, t);
         assembly {
             k := sub(y, y0)
         }
     }
 
     function getX(
-        int256 y,
-        int256 K,
-        int256 o,
-        int256 t
-    ) internal view returns (int256 x) {
+        uint256 y,
+        uint256 K,
+        uint256 o,
+        uint256 t
+    ) internal view returns (uint256 x) {
         int256 sec; //= diviWad(t, YEAR);
         assembly {
-            sec := sdiv(mul(t, ONE), YEAR)
+            sec := div(mul(t, ONE), YEAR)
         }
         int256 vol = sec.sqrt(); // = int256(FixedPointMathLib.sqrt(uint256(sec)));
         //vol = muliWad(o, vol);
@@ -121,7 +124,7 @@ library Invariant {
         int256 phi;
         assembly {
             vol := mul(vol, HALF_SCALAR)
-            vol := sdiv(mul(o, vol), ONE)
+            vol := div(mul(o, vol), ONE)
             phi := sdiv(mul(y, ONE), K)
         }
         phi = phi.ppf();

@@ -3,13 +3,15 @@ pragma solidity 0.8.13;
 import "forge-std/Test.sol";
 
 import "../../../contracts/Gaussian.sol";
+import "../../../contracts/Invariant.sol";
 
 contract DifferentialTests is Test {
     enum DifferentialFunctions {
         erfc,
         ierfc,
         cdf,
-        ppf
+        ppf,
+        invariant
     }
 
     string internal constant DATA_DIR = "test/differential/data/";
@@ -18,6 +20,7 @@ contract DifferentialTests is Test {
     int256 _epsilon;
     int256[129] _inputs;
     int256[129] _outputs;
+    uint256[5][129] _invariantInputs;
 
     function setUp() public {
         generate();
@@ -44,7 +47,11 @@ contract DifferentialTests is Test {
         cmds[0] = "cat";
         cmds[1] = string(abi.encodePacked(DATA_DIR, key, "/input"));
         bytes memory result = vm.ffi(cmds);
-        inputs = abi.decode(result, (int256[129]));
+        if (keccak256(abi.encodePacked(key)) == keccak256("invariant")) {
+            _invariantInputs = abi.decode(result, (uint256[5][129]));
+        } else {
+            inputs = abi.decode(result, (int256[129]));
+        }
         _inputs = inputs;
         // Get outputs.
         cmds[0] = "cat";
@@ -78,6 +85,12 @@ contract DifferentialTests is Test {
         run(DifferentialFunctions.ppf);
     }
 
+    function testDifferentialInvariant() public {
+        _epsilon = 1e12;
+        load("invariant");
+        run(DifferentialFunctions.invariant);
+    }
+
     function run(DifferentialFunctions fn) public {
         if (fn == DifferentialFunctions.erfc) {
             _run(Gaussian.erfc);
@@ -87,15 +100,43 @@ contract DifferentialTests is Test {
             _run(Gaussian.cdf);
         } else if (fn == DifferentialFunctions.ppf) {
             _run(Gaussian.ppf);
+        } else if (fn == DifferentialFunctions.invariant) {
+            _run(customInvariant);
         } else {
             revert();
         }
+    }
+
+    function customInvariant(uint256[5] memory args)
+        internal
+        view
+        returns (int256 k)
+    {
+        Invariant.Args memory invariantInputs;
+        uint256 y = args[0];
+        invariantInputs.x = args[1];
+        invariantInputs.K = args[2];
+        invariantInputs.o = args[3];
+        invariantInputs.t = args[4];
+        k = Invariant.invariant(invariantInputs, y);
     }
 
     function _run(function(int256) view returns (int256) method) internal {
         uint256 length = _inputs.length;
         for (uint256 i = 0; i < length; ++i) {
             int256 input = _inputs[i];
+            int256 output = _outputs[i];
+            int256 computed = method(input);
+            assertEq(computed / _epsilon, output / _epsilon);
+        }
+    }
+
+    function _run(function(uint256[5] memory) view returns (int256) method)
+        internal
+    {
+        uint256 length = _invariantInputs.length;
+        for (uint256 i = 0; i < length; ++i) {
+            uint256[5] memory input = _invariantInputs[i];
             int256 output = _outputs[i];
             int256 computed = method(input);
             assertEq(computed / _epsilon, output / _epsilon);
