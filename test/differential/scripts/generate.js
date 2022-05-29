@@ -95,6 +95,7 @@ var COMPUTE_FN_INPUTS = {
     return (0, evm_bn_1.toBn)(Math.random().toString())._hex
   },
   invariant: function (x) {
+    x = x * Math.random()
     var K = getStrike(x)
     var o = getSigma(x)
     var t = getTau(x)

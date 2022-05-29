@@ -18,10 +18,10 @@ var gaussian_1 = __importDefault(require('gaussian'))
 exports.YEAR = 31556952
 function parse(args) {
   return {
-    x: BigInt(args.x * 1e18),
-    K: BigInt(args.K * 1e18),
-    o: BigInt(args.o * 1e18),
-    t: BigInt(args.t * exports.YEAR),
+    x: BigInt(Math.floor(args.x * 1e18)),
+    K: BigInt(Math.floor(args.K * 1e18)),
+    o: BigInt(Math.floor(args.o * 1e18)),
+    t: BigInt(Math.floor(args.t * exports.YEAR)),
   }
 }
 exports.parse = parse

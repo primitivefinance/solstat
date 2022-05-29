@@ -20,10 +20,10 @@ export const YEAR = 31556952
 
 export function parse(args: Args): ArgsBig {
   return {
-    x: BigInt((args.x as number) * 1e18),
-    K: BigInt((args.K as number) * 1e18),
-    o: BigInt((args.o as number) * 1e18),
-    t: BigInt((args.t as number) * YEAR),
+    x: BigInt(Math.floor((args.x as number) * 1e18)),
+    K: BigInt(Math.floor((args.K as number) * 1e18)),
+    o: BigInt(Math.floor((args.o as number) * 1e18)),
+    t: BigInt(Math.floor((args.t as number) * YEAR)),
   }
 }
 
