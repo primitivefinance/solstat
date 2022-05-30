@@ -48,11 +48,10 @@ function abs(int256 input) pure returns (uint256 output) {
 }
 
 /**
- * @title Gaussian Math Library
+ * @title Gaussian Math Library.
  * @author @alexangelj
  * @dev Models the normal distribution.
- * @custom:coauthor
- * @custom:source Inspired by https://github.com/errcw/gaussian
+ * @custom:source Inspired by https://github.com/errcw/gaussian.
  */
 library Gaussian {
     using FixedPointMathLib for int256;
@@ -99,7 +98,7 @@ library Gaussian {
             // 1 / (1 + z / 2)
             let quo := sdiv(mul(z, ONE), TWO)
             let den := add(ONE, quo)
-            t := sdiv(SCALAR_SQRD, den) // 1e18 * 1e18 / denominator
+            t := sdiv(SCALAR_SQRD, den)
 
             function muli(pxn, pxd) -> res {
                 res := sdiv(mul(pxn, pxd), ONE)
@@ -193,19 +192,13 @@ library Gaussian {
             }
         }
 
-        int256 ln = FixedPointMathLib.lnWad(diviWad(xx, TWO)); // ln( xx / 2)
-        uint256 t = uint256(muliWad(NEGATIVE_TWO, ln)).sqrt(); //int256(FixedPointMathLib.sqrt(uint256(muliWad(-TWO, ln))));
+        int256 ln = FixedPointMathLib.lnWad(diviWad(xx, TWO));
+        uint256 t = uint256(muliWad(NEGATIVE_TWO, ln)).sqrt();
         assembly {
             t := mul(t, HALF_SCALAR)
         }
+
         int256 r;
-
-        /* {
-            int256 step1 = (IERFC_B + muliWad(t, IERFC_C));
-            int256 step2 = (ONE + muliWad(t, (IERFC_D + muliWad(t, IERFC_E))));
-            r = muliWad(IERFC_A, diviWad(step1, step2) - t);
-        } */
-
         assembly {
             function muli(pxn, pxd) -> res {
                 res := sdiv(mul(pxn, pxd), ONE)
@@ -225,23 +218,17 @@ library Gaussian {
 
         uint256 itr;
         while (itr < 2) {
-            int256 err = erfc(r); //  = erfc(r) - xx;
+            int256 err = erfc(r);
             assembly {
                 err := sub(err, xx)
             }
 
-            int256 input; // -(muliWad(r, r))
+            int256 input;
             assembly {
-                input := add(not(sdiv(mul(r, r), ONE)), 1)
+                input := add(not(sdiv(mul(r, r), ONE)), 1) // -(muliWad(r, r))
             }
 
-            int256 expWad = input.expWad(); //  = FixedPointMathLib.expWad(-(muliWad(r, r)));
-
-            //int256 denom = muliWad(IERFC_F, expWad) - muliWad(r, err);
-            //r += diviWad(err, denom);
-            //unchecked {
-            //    ++itr;
-            //}
+            int256 expWad = input.expWad();
 
             assembly {
                 function muli(pxn, pxd) -> res {
