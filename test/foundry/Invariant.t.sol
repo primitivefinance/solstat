@@ -7,8 +7,8 @@ import {Invariant} from "../../contracts/Invariant.sol";
 import {TestInvariant} from "../../contracts/test/TestInvariant.sol";
 
 contract TInvariant is Test {
-    function _base(uint256 base) internal pure returns (uint256) {
-        return uint256(base % uint256(Invariant.ONE)); // Between 0 and 1e18. Todo: fix for token decimals.
+    function _base(uint256 asset) internal pure returns (uint256) {
+        return uint256(asset % uint256(Invariant.ONE)); // Between 0 and 1e18. Todo: fix for token decimals.
     }
 
     function _quote(uint256 quote, uint256 strike)
@@ -60,13 +60,13 @@ contract TInvariant is Test {
 
     function testFuzzInvariant(
         uint256 quote,
-        uint256 base,
+        uint256 asset,
         uint256 strike,
         uint256 sigma,
         uint256 tau
     ) public {
         TestInvariant.Args memory args = TestInvariant.Args(
-            _base(base),
+            _base(asset),
             _strike(strike),
             _sigma(sigma),
             _tau(tau, block.timestamp)

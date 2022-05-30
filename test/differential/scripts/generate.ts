@@ -54,7 +54,7 @@ const COMPUTE_FN_INPUTS = {
     return toBn(Math.random().toString())._hex
   },
   invariant: function (x): InvariantInput {
-    x = x * Math.random()
+    x = Math.random()
     let K = getStrike(x)
     let o = getSigma(x)
     let t = getTau(x)
