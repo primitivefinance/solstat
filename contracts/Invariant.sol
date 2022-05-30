@@ -6,6 +6,7 @@ import "@rari-capital/solmate/src/utils/FixedPointMathLib.sol";
 
 /**
  * @title Invariant of Primitive RMM.
+ * @author @alexangelj
  * @notice Invariant is `k` with the trading function `k = y - KΦ(Φ⁻¹(1-x) - σ√τ)`.
  *
  * @dev Terms which can potentially be ambiguous are given discrete names.

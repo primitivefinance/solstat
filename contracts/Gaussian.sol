@@ -1,20 +1,60 @@
 // SPDX-License-Identifier: MIT
 pragma solidity 0.8.13;
 
-import "./GaussianConstants.sol";
-import "./FixedMath.sol";
 import "@rari-capital/solmate/src/utils/FixedPointMathLib.sol";
+
+function muli(
+    int256 x,
+    int256 y,
+    int256 denominator
+) pure returns (int256 z) {
+    assembly {
+        // Store x * y in z for now.
+        z := mul(x, y)
+
+        // Equivalent to require(denominator != 0 && (x == 0 || (x * y) / x == y))
+        if iszero(
+            and(iszero(iszero(denominator)), or(iszero(x), eq(sdiv(z, x), y)))
+        ) {
+            revert(0, 0)
+        }
+
+        // Divide z by the denominator.
+        z := sdiv(z, denominator)
+    }
+}
+
+function muliWad(int256 x, int256 y) pure returns (int256 z) {
+    z = muli(x, y, 1e18);
+}
+
+function diviWad(int256 x, int256 y) pure returns (int256 z) {
+    z = muli(x, 1e18, y);
+}
+
+error Min();
+
+function abs(int256 input) pure returns (uint256 output) {
+    if (input == type(int256).min) revert Min();
+    if (input < 0) {
+        assembly {
+            output := add(not(input), 1)
+        }
+    } else {
+        assembly {
+            output := input
+        }
+    }
+}
 
 /**
  * @title Gaussian Math Library
- * @author alexangelj
+ * @author @alexangelj
  * @dev Models the normal distribution.
  * @custom:coauthor
  * @custom:source Inspired by https://github.com/errcw/gaussian
  */
 library Gaussian {
-    using FixedMath for int256;
-    using FixedMath for Fixed256x18;
     using FixedPointMathLib for int256;
     using FixedPointMathLib for uint256;
 
@@ -26,7 +66,7 @@ library Gaussian {
     int256 internal constant ONE = 1e18;
     int256 internal constant TWO = 2e18;
     int256 internal constant NEGATIVE_TWO = -2e18;
-    int256 internal constant SQRT2 = 1_414213562373095048;
+    int256 internal constant SQRT2 = 1_414213562373095048; // √2 with 18 decimals of precision.
     int256 internal constant ERFC_A = 1_265512230000000000;
     int256 internal constant ERFC_B = 1_000023680000000000;
     int256 internal constant ERFC_C = 374091960000000000; // 1e-1
@@ -51,7 +91,7 @@ library Gaussian {
      * @custom:source Numerical Recipes in C 2e p221
      */
     function erfc(int256 input) internal view returns (int256 output) {
-        uint256 z = input.abs();
+        uint256 z = abs(input);
         int256 t;
         int256 step;
         int256 k;
@@ -154,7 +194,7 @@ library Gaussian {
         }
 
         int256 ln = FixedPointMathLib.lnWad(diviWad(xx, TWO)); // ln( xx / 2)
-        int256 t = muliWad(NEGATIVE_TWO, ln).sqrt(); //int256(FixedPointMathLib.sqrt(uint256(muliWad(-TWO, ln))));
+        uint256 t = uint256(muliWad(NEGATIVE_TWO, ln)).sqrt(); //int256(FixedPointMathLib.sqrt(uint256(muliWad(-TWO, ln))));
         assembly {
             t := mul(t, HALF_SCALAR)
         }
