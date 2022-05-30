@@ -4,8 +4,9 @@ pragma solidity 0.8.13;
 import "forge-std/Test.sol";
 
 import {Invariant} from "../../contracts/Invariant.sol";
+import {TestInvariant} from "../../contracts/test/TestInvariant.sol";
 
-contract TestInvariant is Test {
+contract TInvariant is Test {
     function _base(uint256 base) internal pure returns (uint256) {
         return uint256(base % uint256(Invariant.ONE)); // Between 0 and 1e18. Todo: fix for token decimals.
     }
@@ -34,8 +35,8 @@ contract TestInvariant is Test {
             ); // Between block.timestamp and 2^32 - 1.
     }
 
-    function getArgs() internal pure returns (Invariant.Args memory) {
-        Invariant.Args memory args = Invariant.Args(
+    function getArgs() internal pure returns (TestInvariant.Args memory) {
+        TestInvariant.Args memory args = TestInvariant.Args(
             308537538726e6,
             1e18,
             1e18,
@@ -45,16 +46,16 @@ contract TestInvariant is Test {
     }
 
     function testGetYGas() public logs_gas {
-        uint256 actual = Invariant.getY(getArgs());
+        uint256 actual = TestInvariant.getY(getArgs());
     }
 
     function testGetXGas() public logs_gas {
-        uint256 actual = Invariant.getX(getArgs());
+        uint256 actual = TestInvariant.getX(getArgs());
     }
 
     function testInvariantGas() public logs_gas {
         uint256 y = 308537538726e6;
-        int256 actual = Invariant.invariant(getArgs(), y);
+        int256 actual = TestInvariant.invariant(getArgs(), y);
     }
 
     function testFuzzInvariant(
@@ -64,7 +65,7 @@ contract TestInvariant is Test {
         uint256 sigma,
         uint256 tau
     ) public {
-        Invariant.Args memory args = Invariant.Args(
+        TestInvariant.Args memory args = TestInvariant.Args(
             _base(base),
             _strike(strike),
             _sigma(sigma),
@@ -75,7 +76,7 @@ contract TestInvariant is Test {
         console.log(args.K);
         console.log(args.o);
         console.log(args.t);
-        int256 k = Invariant.invariant(args, _quote(quote, args.K));
+        int256 k = TestInvariant.invariant(args, _quote(quote, args.K));
         if (args.t == 0) {
             int256 expected = int256(
                 (args.K * (uint256(Invariant.ONE) - args.x)) / 1e18

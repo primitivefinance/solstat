@@ -3,20 +3,27 @@ pragma solidity 0.8.13;
 
 import "../Invariant.sol";
 
-contract TestInvariant {
-    function getY(Invariant.Args memory args) public view returns (uint256) {
-        return Invariant.getY(args.x, args.K, args.o, args.t);
+library TestInvariant {
+    struct Args {
+        uint256 x;
+        uint256 K;
+        uint256 o;
+        uint256 t;
     }
 
-    function getX(Invariant.Args memory args) public view returns (uint256) {
-        return Invariant.getX(args.x, args.K, args.o, args.t);
+    function getY(Args memory args) public view returns (uint256 y) {
+        y = Invariant.getY(args.x, args.K, args.o, args.t);
     }
 
-    function invariant(uint256 y, Invariant.Args memory args)
+    function getX(Args memory args) public view returns (uint256 x) {
+        x = Invariant.getX(args.x, args.K, args.o, args.t);
+    }
+
+    function invariant(Args memory args, uint256 R_y)
         public
         view
-        returns (int256)
+        returns (int256 inv)
     {
-        return Invariant.invariant(y, args.x, args.K, args.o, args.t);
+        inv = Invariant.invariant(R_y, args.x, args.K, args.o, args.t);
     }
 }

@@ -3,7 +3,7 @@ pragma solidity 0.8.13;
 import "forge-std/Test.sol";
 
 import "../../../contracts/Gaussian.sol";
-import "../../../contracts/Invariant.sol";
+import "../../../contracts/test/TestInvariant.sol";
 
 contract DifferentialTests is Test {
     enum DifferentialFunctions {
@@ -112,13 +112,13 @@ contract DifferentialTests is Test {
         view
         returns (int256 k)
     {
-        Invariant.Args memory invariantInputs;
+        TestInvariant.Args memory invariantInputs;
         uint256 y = args[0];
         invariantInputs.x = args[1];
         invariantInputs.K = args[2];
         invariantInputs.o = args[3];
         invariantInputs.t = args[4];
-        k = Invariant.invariant(invariantInputs, y);
+        k = TestInvariant.invariant(invariantInputs, y);
     }
 
     function _run(function(int256) view returns (int256) method) internal {

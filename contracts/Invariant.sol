@@ -7,138 +7,129 @@ import "@rari-capital/solmate/src/utils/FixedPointMathLib.sol";
 
 /**
  * @title Invariant of Primitive RMM.
- * @dev `y - KΦ(Φ⁻¹(1-x) - σ√τ) = k`
+ * @notice Invariant is `k = y - KΦ(Φ⁻¹(1-x) - σ√τ)`.
+ *
+ * @dev Terms which can potentially be ambiguous are given discrete names.
+ * This makes it easier to search for terms and update terms.
+ * Variables can sometimes not be trusted to be or act like their names.
+ * This naming scheme avoids this problem using a glossary to define them.
+ *
+ * // ------------------ Glossary ------------------ //
+ *
+ * `R_x` - Amount of base token reserves per single unit of liquidity. Units are unsigned SCALAR.
+ * `R_y` - Amount of quote token reserves per single unit of liquidity. Units are unsigned SCALAR.
+ * `stk` - Strike price of the pool. The terminal price of each base token. Units are unsigned SCALAR.
+ * `vol` - Implied volatility of the pool. Higher vol = lower $ value per liquidity. Units are unsigned SCALAR.
+ * `tau` - Time until maturity of pool. Amount of seconds until the pool's curve becomes flat around `stk`. Units are YEAR.
+ * `inv` - Invariant of the pool. Difference between theoretical $ value and actual $ value per liquidity. Units are signed SCALAR.
+ *
+ * // ------------------ Units ------------------ //
+ *
+ * `SCALAR` - Equal to `1.` with 18 decimals. Either signed or unsigned.
+ * `YEAR`   - Equal to the amount of seconds in a year. Used in `invariant` function.
+ *
+ * // ------------------ Error Bounds ------------------ //
+ *
+ * `invariant` - 1e-9
+ * `
+ *
  */
 library Invariant {
     using Gaussian for int256;
     using FixedMath for int256;
     using FixedPointMathLib for uint256;
 
-    int256 internal constant YEAR = 31556952;
     int256 internal constant ONE = 1e18;
+    int256 internal constant YEAR = 31556952;
     int256 internal constant HALF_SCALAR = 1e9;
-
-    struct Args {
-        uint256 x;
-        uint256 K;
-        uint256 o;
-        uint256 t;
-    }
-
-    function getY(Args memory args) internal view returns (uint256 y) {
-        y = getY(args.x, args.K, args.o, args.t);
-    }
-
-    function getX(Args memory args) internal view returns (uint256 x) {
-        x = getX(args.x, args.K, args.o, args.t);
-    }
 
     error Bad();
 
     function getY(
-        uint256 x,
-        uint256 K,
-        uint256 o,
-        uint256 t
-    ) internal view returns (uint256 y) {
-        if (t < 0) revert Bad();
-        if (t != 0) {
-            //int256 sec = diviWad(t, YEAR);
-            //int256 vol = int256(FixedPointMathLib.sqrt(uint256(sec)));
-
+        uint256 R_x,
+        uint256 stk,
+        uint256 vol,
+        uint256 tau
+    ) internal view returns (uint256 R_y) {
+        if (tau < 0) revert Bad();
+        if (tau != 0) {
             int256 sec;
             assembly {
-                // Scales amount of seconds to units of `SCALAR`. The `t` must be in units of `YEAR`.
-                // For example, if `t` == `YEAR`, `sec` will be `SCALAR`, which is equal to one year.
-                sec := sdiv(mul(t, ONE), YEAR)
+                // Scales amount of seconds to units of `SCALAR`. The `tau` must be in units of `YEAR`.
+                // For example, if `tau` == `YEAR`, `sec` will be `SCALAR`, which is equal to one year.
+                sec := sdiv(mul(tau, ONE), YEAR)
             }
-            int256 vol = sec.sqrt();
+
+            int256 sdr = sec.sqrt();
             assembly {
-                vol := mul(vol, HALF_SCALAR)
-                vol := sdiv(mul(o, vol), ONE)
+                sdr := mul(sdr, HALF_SCALAR)
+                sdr := sdiv(mul(vol, sdr), ONE)
             }
-            //vol = muliWad(o, vol);
+
             int256 phi;
             assembly {
-                phi := sub(ONE, x)
+                phi := sub(ONE, R_x)
             }
-
             phi = phi.ppf();
 
-            int256 input;
+            int256 cdf;
             assembly {
-                input := sub(phi, vol)
+                cdf := sub(phi, sdr)
             }
+            cdf = cdf.cdf();
 
-            input = input.cdf();
             assembly {
-                y := sdiv(mul(K, input), ONE)
+                R_y := sdiv(mul(stk, cdf), ONE)
             }
-
-            //int256 phi = (ONE - x).ppf();
-            //int256 input = phi - vol;
-            //y = muliWad(K, input.cdf());
         } else {
-            //y = muliWad(K, ONE - x);
             assembly {
-                // `K` is in SCALAR, ONE - x is in SCALAR, so SCALAR * SCALAR / SCALAR = SCALAR.
-                y := sdiv(mul(K, sub(ONE, x)), ONE)
+                // `stk` is in SCALAR, ONE - R_x is in SCALAR, so SCALAR * SCALAR / SCALAR = SCALAR.
+                R_y := sdiv(mul(stk, sub(ONE, R_x)), ONE)
             }
-        }
-    }
-
-    function invariant(Args memory args, uint256 y)
-        internal
-        view
-        returns (int256 k)
-    {
-        k = invariant(y, args.x, args.K, args.o, args.t);
-    }
-
-    function invariant(
-        uint256 y,
-        uint256 x,
-        uint256 K,
-        uint256 o,
-        uint256 t
-    ) internal view returns (int256 k) {
-        uint256 y0 = getY(x, K, o, t);
-        assembly {
-            k := sub(y, y0)
         }
     }
 
     function getX(
-        uint256 y,
-        uint256 K,
-        uint256 o,
-        uint256 t
-    ) internal view returns (uint256 x) {
-        int256 sec; //= diviWad(t, YEAR);
+        uint256 R_y,
+        uint256 stk,
+        uint256 vol,
+        uint256 tau
+    ) internal view returns (uint256 R_x) {
+        int256 sec;
         assembly {
-            sec := div(mul(t, ONE), YEAR)
+            sec := div(mul(tau, ONE), YEAR)
         }
-        int256 vol = sec.sqrt(); // = int256(FixedPointMathLib.sqrt(uint256(sec)));
-        //vol = muliWad(o, vol);
+        int256 sdr = sec.sqrt();
 
         int256 phi;
         assembly {
-            vol := mul(vol, HALF_SCALAR)
-            vol := div(mul(o, vol), ONE)
-            phi := sdiv(mul(y, ONE), K)
+            sdr := mul(sdr, HALF_SCALAR)
+            sdr := div(mul(vol, sdr), ONE)
+            phi := sdiv(mul(R_y, ONE), stk)
         }
         phi = phi.ppf();
 
-        //int256 phi = diviWad(y, K).ppf();
-        //int256 input = phi + vol;
-        int256 input;
+        int256 cdf;
         assembly {
-            input := add(phi, vol)
+            cdf := add(phi, sdr)
         }
-        input = input.cdf();
-        //x = ONE - input.cdf();
+        cdf = cdf.cdf();
+
         assembly {
-            x := sub(ONE, input)
+            R_x := sub(ONE, cdf)
+        }
+    }
+
+    function invariant(
+        uint256 R_y,
+        uint256 R_x,
+        uint256 stk,
+        uint256 vol,
+        uint256 tau
+    ) internal view returns (int256 inv) {
+        uint256 y = getY(R_x, stk, vol, tau);
+        assembly {
+            inv := sub(R_y, y)
         }
     }
 }
