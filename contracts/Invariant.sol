@@ -1,7 +1,6 @@
 // SPDX-License-Identifier: MIT
-pragma solidity 0.8.13;
+pragma solidity ^0.8.4;
 
-import "./FixedMath.sol";
 import "./Gaussian.sol";
 import "@rari-capital/solmate/src/utils/FixedPointMathLib.sol";
 
@@ -52,7 +51,6 @@ import "@rari-capital/solmate/src/utils/FixedPointMathLib.sol";
  */
 library Invariant {
     using Gaussian for int256; // Uses the `cdf` and `pdf` functions.
-    using FixedMath for int256;
     using FixedPointMathLib for uint256; // Uses the `sqrt` function.
 
     int256 internal constant ONE = 1e18;
@@ -60,7 +58,7 @@ library Invariant {
     int256 internal constant HALF_SCALAR = 1e9;
 
     /**
-     * @dev Reverts when an input value is out of bounds of its acceptable values.
+     * @dev Reverts when an input value is out of bounds of its acceptable ran ge.
      */
     error OOB();
 
@@ -69,13 +67,14 @@ library Invariant {
      *
      * @dev Computes `y` in `y = KΦ(Φ⁻¹(1-x) - σ√τ) + k`.
      * Primary function use to compute the invariant.
-     * Simplifies to `K * (1 -x)` when time to expiry is zero.
+     * Simplifies to `K(1 -x) + k` when time to expiry is zero.
      * Reverts if `R_x` is greater than one. Units are a fixed point number with 18 decimals.
      *
      * @param R_x Quantity of token reserve `x` within the bounds of [0, 1].
      * @param stk Strike price of the pool. Terminal price of asset `x` in the pool denominated in asset `y`.
      * @param vol Implied volatility of the pool. Higher implied volatility = higher price impact on swaps.
      * @param tau Time until the pool expires. Once expired, no swaps can happen. Scaled to units of `Invariant.YEAR`.
+     * @param inv Current invariant given the actual `R_x`. Zero if computing invariant itself.
      * @return R_y Quantity of token reserve `y` within the bounds of [0, stk].
      *
      * @custom:error Technically, none. This is the source of truth for the trading function.
@@ -85,43 +84,41 @@ library Invariant {
         uint256 R_x,
         uint256 stk,
         uint256 vol,
-        uint256 tau
+        uint256 tau,
+        int256 inv
     ) internal view returns (uint256 R_y) {
         if (R_x > uint256(ONE)) revert OOB();
-
+        // Short circuits because tau != 0 is more likely.
         if (tau != 0) {
-            int256 sec;
+            uint256 sec;
             assembly {
-                // Scales amount of seconds to units of `SCALAR`. The `tau` must be in units of `YEAR`.
-                // For example, if `tau` == `YEAR`, `sec` will be `SCALAR`, which is equal to one year.
-                sec := sdiv(mul(tau, ONE), YEAR)
+                sec := sdiv(mul(tau, ONE), YEAR) // Unit math: YEAR * SCALAR / YEAR = SCALAR.
             }
 
-            int256 sdr = sec.sqrt();
+            uint256 sdr = sec.sqrt(); // √τ.
             assembly {
-                sdr := mul(sdr, HALF_SCALAR)
-                sdr := sdiv(mul(vol, sdr), ONE)
+                sdr := mul(sdr, HALF_SCALAR) // Unit math: sdr * HALF_SCALAR = SCALAR.
+                sdr := sdiv(mul(vol, sdr), ONE) // σ√τ.
             }
 
             int256 phi;
             assembly {
                 phi := sub(ONE, R_x)
             }
-            phi = phi.ppf();
+            phi = phi.ppf(); // Φ⁻¹(1-x).
 
             int256 cdf;
             assembly {
-                cdf := sub(phi, sdr)
+                cdf := sub(phi, sdr) // Φ⁻¹(1-x) - σ√τ.
             }
-            cdf = cdf.cdf();
+            cdf = cdf.cdf(); // Φ(Φ⁻¹(1-x) - σ√τ).
 
             assembly {
-                R_y := sdiv(mul(stk, cdf), ONE)
+                R_y := add(sdiv(mul(stk, cdf), ONE), inv)
             }
         } else {
             assembly {
-                // `stk` is in SCALAR, ONE - R_x is in SCALAR, so SCALAR * SCALAR / SCALAR = SCALAR.
-                R_y := sdiv(mul(stk, sub(ONE, R_x)), ONE)
+                R_y := add(sdiv(mul(stk, sub(ONE, R_x)), ONE), inv)
             }
         }
     }
@@ -138,6 +135,7 @@ library Invariant {
      * @param stk Strike price of the pool. Terminal price of asset `x` in the pool denominated in asset `y`.
      * @param vol Implied volatility of the pool. Higher implied volatility = higher price impact on swaps.
      * @param tau Time until the pool expires. Once expired, no swaps can happen. Scaled to units of `Invariant.YEAR`.
+     * @param inv Current invariant given the actual reserves `R_y`.
      * @return R_x Quantity of token reserve `x` within the bounds of [0, 1].
      *
      * @custom:error Up to 1e-6. This an **approximated** "inverse" of the `getY` function.
@@ -147,37 +145,41 @@ library Invariant {
         uint256 R_y,
         uint256 stk,
         uint256 vol,
-        uint256 tau
+        uint256 tau,
+        int256 inv
     ) internal view returns (uint256 R_x) {
         if (R_y > stk) revert OOB();
-
+        // Short circuits because tau != 0 is more likely.
         if (tau != 0) {
-            int256 sec;
+            uint256 sec;
             assembly {
-                sec := div(mul(tau, ONE), YEAR)
+                sec := div(mul(tau, ONE), YEAR) // Unit math: YEAR * SCALAR / YEAR = SCALAR.
             }
-            int256 sdr = sec.sqrt();
+
+            uint256 sdr = sec.sqrt(); // √τ.
+            assembly {
+                sdr := mul(sdr, HALF_SCALAR) // Unit math: HALF_SCALAR * HALF_SCALAR = SCALAR.
+                sdr := div(mul(vol, sdr), ONE) // σ√τ.
+            }
 
             int256 phi;
             assembly {
-                sdr := mul(sdr, HALF_SCALAR)
-                sdr := div(mul(vol, sdr), ONE)
-                phi := sdiv(mul(R_y, ONE), stk)
+                phi := sdiv(add(mul(R_y, ONE), inv), stk) // (y + k) / K.
             }
-            phi = phi.ppf();
+            phi = phi.ppf(); // Φ⁻¹( (y + k) / K ).
 
             int256 cdf;
             assembly {
-                cdf := add(phi, sdr)
+                cdf := add(phi, sdr) // Φ⁻¹( (y + k) / K ) + σ√τ.
             }
-            cdf = cdf.cdf();
+            cdf = cdf.cdf(); // Φ(Φ⁻¹( (y + k) / K ) + σ√τ).
 
             assembly {
                 R_x := sub(ONE, cdf)
             }
         } else {
             assembly {
-                R_x := sub(ONE, sdiv(mul(add(R_y, 0), ONE), stk))
+                R_x := sub(ONE, sdiv(mul(add(R_y, inv), ONE), stk))
             }
         }
     }
@@ -185,7 +187,7 @@ library Invariant {
     /**
      * @notice Computes the invariant of the RMM trading function.
      *
-     * @dev Computes `k` in `y = KΦ(Φ⁻¹(1-x) - σ√τ) + k`.
+     * @dev Computes `k` in `k = y - KΦ(Φ⁻¹(1-x) - σ√τ)`.
      * Used to validate swaps, the most critical function.
      *
      * @custom:source https://rmm.eth.xyz
@@ -197,7 +199,7 @@ library Invariant {
         uint256 vol,
         uint256 tau
     ) internal view returns (int256 inv) {
-        uint256 y = getY(R_x, stk, vol, tau);
+        uint256 y = getY(R_x, stk, vol, tau, inv); // `inv` is 0 because we are solving `inv`, aka `k`.
         assembly {
             inv := sub(R_y, y)
         }

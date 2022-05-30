@@ -12,11 +12,11 @@ library TestInvariant {
     }
 
     function getY(Args memory args) public view returns (uint256 y) {
-        y = Invariant.getY(args.x, args.K, args.o, args.t);
+        y = Invariant.getY(args.x, args.K, args.o, args.t, 0);
     }
 
     function getX(Args memory args) public view returns (uint256 x) {
-        x = Invariant.getX(args.x, args.K, args.o, args.t);
+        x = Invariant.getX(args.x, args.K, args.o, args.t, 0);
     }
 
     function invariant(Args memory args, uint256 R_y)
