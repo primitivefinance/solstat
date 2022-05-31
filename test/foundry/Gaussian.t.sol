@@ -36,4 +36,8 @@ contract TestGaussian is Test {
     function testPPFGas() public logs_gas {
         int256 actual = Gaussian.ppf(5e17);
     }
+
+    function testPDFGas() public logs_gas {
+        int256 actual = Gaussian.pdf(5e17);
+    }
 }

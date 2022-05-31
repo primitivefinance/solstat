@@ -57,6 +57,8 @@ library Gaussian {
     using FixedPointMathLib for int256;
     using FixedPointMathLib for uint256;
 
+    uint256 internal constant PI = 3_141592653589793238;
+    int256 internal constant SQRT_2PI = 2_506628274631000502;
     int256 internal constant SIGN = -1;
     int256 internal constant SCALAR = 1e18;
     int256 internal constant HALF_SCALAR = 1e9;
@@ -282,7 +284,17 @@ library Gaussian {
      * @dev
      * @custom:source
      */
-    function pdf() internal pure returns (uint256) {}
+    function pdf(int256 x) internal pure returns (int256 z) {
+        int256 e;
+        assembly {
+            e := sdiv(mul(add(not(x), 1), x), TWO)
+        }
+        e = FixedPointMathLib.expWad(e);
+
+        assembly {
+            z := sdiv(mul(e, ONE), SQRT_2PI)
+        }
+    }
 
     /**
      * @notice Approximation of the Percent Point Function.
