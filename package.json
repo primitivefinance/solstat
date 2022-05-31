@@ -4,7 +4,7 @@
   "description": "Forkable Hardhat & Foundry template with Primitive flavors.",
   "scripts": {
     "build": "hardhat compile --config ./hardhat.config.ts",
-    "test": "hardhat test --config ./hardhat.config.ts",
+    "test": "TS_NODE_TRANSPILE_ONLY=1 hardhat test --config ./hardhat.config.ts",
     "test:forge": "FOUNDRY_PROFILE=test forge test -vvv",
     "profile": "REPORT_GAS=true hardhat test --config ./hardhat.config.ts",
     "coverage": "hardhat coverage --config ./hardhat-coverage.config.ts --solcoverjs ./config/.solcover.js",

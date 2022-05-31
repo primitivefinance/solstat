@@ -25,11 +25,19 @@ contract TestGaussian is Test {
         assertEq(actual, expected);
     }
 
-    function testDiffERFC() public {
-        string[] memory cmds = new string[](8);
-        cmds[0] = "npx";
-        cmds[1] = "hardhat";
-        cmds[2] = "run";
-        cmds[3] = "";
+    function testIERFCGas() public logs_gas {
+        int256 actual = Gaussian.ierfc(5e17);
+    }
+
+    function testCDFGas() public logs_gas {
+        int256 actual = Gaussian.cdf(-5e17);
+    }
+
+    function testPPFGas() public logs_gas {
+        int256 actual = Gaussian.ppf(5e17);
+    }
+
+    function testPDFGas() public logs_gas {
+        int256 actual = Gaussian.pdf(5e17);
     }
 }

@@ -102,7 +102,7 @@ describe('Gaussian', function () {
     expect(format(actual)).to.closeTo(expected, 1e-17)
   })
 
-  it.only('gets ppf', async function () {
+  it('gets ppf', async function () {
     const math = await (await hre.ethers.getContractFactory('TestGaussian')).deploy()
     let x = 2
     let actual = await math.ppf(parse(x))
@@ -131,6 +131,14 @@ describe('Gaussian', function () {
     x = 0
     actual = await math.ppf(parse(x))
     expected = gaussian(0, 1).ppf(x)
+    expect(format(actual)).to.be.closeTo(expected, 1e-7)
+  })
+
+  it('gets pdf', async function () {
+    const math = await (await hre.ethers.getContractFactory('TestGaussian')).deploy()
+    let x = 0.5
+    let actual = await math.pdf(parse(x))
+    let expected = gaussian(0, 1).pdf(x)
     expect(format(actual)).to.be.closeTo(expected, 1e-7)
   })
 })

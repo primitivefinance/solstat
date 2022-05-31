@@ -19,4 +19,8 @@ contract TestGaussian {
     function ppf(int256 input) public view returns (int256) {
         return Gaussian.ppf(input);
     }
+
+    function pdf(int256 input) public view returns (int256) {
+        return Gaussian.pdf(input);
+    }
 }

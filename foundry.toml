@@ -24,6 +24,7 @@ via_ir = false
 src = 'test/foundry'
 gas_reports = ["*"]
 ffi = true
+fuzz_runs = 500
 
 [lite]
 out = 'optimized-out'
