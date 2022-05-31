@@ -4,3 +4,6 @@ cache
 coverage
 coverage*
 typechain-types
+
+# Ignore certain files
+/contracts/Bisection.sol
