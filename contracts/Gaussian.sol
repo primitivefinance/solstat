@@ -50,7 +50,17 @@ function abs(int256 input) pure returns (uint256 output) {
 /**
  * @title Gaussian Math Library.
  * @author @alexangelj
- * @dev Models the normal distribution.
+ *
+ * @notice Models the normal distribution using the special Compimentary Error Function.
+ *
+ * @dev Only implements a distribution with mean (µ) = 0 and variance (σ) = 1.
+ * Uses Numerical Recipes as a framework and reference C implemenation.
+ * Numerical Recipes cites the original textbook written by Abramowitz and Stegun,
+ * "Handbook of Mathematical Functions", which should be read to understand these
+ * special functions and the implications of their numerical approximations.
+ *
+ * @custom:source Handbook of Mathematical Functions https://personal.math.ubc.ca/~cbm/aands/abramowitz_and_stegun.pdf.
+ * @custom:source Numerical Recipes https://e-maxx.ru/bookz/files/numerical_recipes.pdf.
  * @custom:source Inspired by https://github.com/errcw/gaussian.
  */
 library Gaussian {
@@ -87,9 +97,22 @@ library Gaussian {
 
     /**
      * @notice Approximation of the Complimentary Error Function.
-     * @dev
+     * Related to the Error Function: `erfc(x) = 1 - erf(x)`.
+     * Both cumulative distribution and error functions are integrals
+     * which cannot be expressed in elementary terms. They are called special functions.
+     * The error and complimentary error functions have numerical approximations
+     * which is what is used in this library to compute the cumulative distribution function.
+     *
+     * @dev This is a special function with its own identities.
+     * Identity: `erfc(-x) = 2 - erfc(x)`.
+     * Special Values:
+     * erfc(-infinity)	=	2
+     * erfc(0)      	=	1
+     * erfc(infinity)	=	0
+     *
      * @custom:epsilon Fractional error less than 1.2e-7.
-     * @custom:source Numerical Recipes in C 2e p221
+     * @custom:source Numerical Recipes in C 2e p221.
+     * @custom:source https://mathworld.wolfram.com/Erfc.html.
      */
     function erfc(int256 input) internal view returns (int256 output) {
         uint256 z = abs(input);
@@ -97,8 +120,7 @@ library Gaussian {
         int256 step;
         int256 k;
         assembly {
-            // 1 / (1 + z / 2)
-            let quo := sdiv(mul(z, ONE), TWO)
+            let quo := sdiv(mul(z, ONE), TWO) // 1 / (1 + z / 2).
             let den := add(ONE, quo)
             t := sdiv(SCALAR_SQRD, den)
 
@@ -164,18 +186,28 @@ library Gaussian {
     }
 
     /**
-     * @notice Approximation of the Imaginary Complimentary Error Function.
-     * @dev Domain is (0, 2)
+     * @notice Approximation of the Inverse Complimentary Error Function - erfc^(-1).
+     *
+     * @dev Equal to `ierfc(erfc(x)) = erfc(ierfc(x))` for 0 < x < 2.
+     * Related to the Inverse Error Function: `ierfc(1 - x) = ierf(x)`.
+     * This is a special function with its own identities.
+     * Domain:      0 < x < 2
+     * Special values:
+     * ierfc(0)	=	infinity
+     * ierfc(1)	=	0
+     * ierfc(2)	=	-infinity
+     *
      * @custom:source Numerical Recipes 3e p265.
+     * @custom:source https://mathworld.wolfram.com/InverseErfc.html.
      */
     function ierfc(int256 x) internal view returns (int256 z) {
         assembly {
-            // x >= 2, iszero(x < 2 ? 1 : 0) ? 1 : 0
+            // x >= 2, iszero(x < 2 ? 1 : 0) ? 1 : 0.
             if iszero(slt(x, TWO)) {
                 z := mul(add(not(100), 1), SCALAR)
             }
 
-            // x <= 0
+            // x <= 0.
             if iszero(sgt(x, 0)) {
                 z := mul(100, SCALAR)
             }
@@ -183,7 +215,7 @@ library Gaussian {
 
         if (z != 0) return z;
 
-        int256 xx; // = (x < ONE) ? x : TWO - x;
+        int256 xx; // (x < ONE) ? x : TWO - x.
         assembly {
             switch iszero(slt(x, ONE))
             case 0 {
@@ -227,7 +259,7 @@ library Gaussian {
 
             int256 input;
             assembly {
-                input := add(not(sdiv(mul(r, r), ONE)), 1) // -(muliWad(r, r))
+                input := add(not(sdiv(mul(r, r), ONE)), 1) // -(r * r).
             }
 
             int256 expWad = input.expWad();
@@ -249,9 +281,8 @@ library Gaussian {
             }
         }
 
-        // z = x < ONE ? r : -r;
         assembly {
-            switch iszero(slt(x, ONE))
+            switch iszero(slt(x, ONE)) // x < ONE ? r : -r.
             case 0 {
                 z := r
             }
@@ -263,8 +294,12 @@ library Gaussian {
 
     /**
      * @notice Approximation of the Cumulative Distribution Function.
-     * @dev
-     * @custom:source
+     *
+     * @dev Equal to `D(x) = 0.5[ 1 + erf((x - µ) / σ√2)]`.
+     * Only computes cdf of a distribution with µ = 0 and σ = 1.
+     *
+     * @custom:error Maximum error of 1.2e-7.
+     * @custom:source https://mathworld.wolfram.com/NormalDistribution.html.
      */
     function cdf(int256 x) internal view returns (int256 z) {
         int256 negated;
@@ -281,13 +316,17 @@ library Gaussian {
 
     /**
      * @notice Approximation of the Probability Density Function.
-     * @dev
-     * @custom:source
+     *
+     * @dev Equal to `Z(x) = (1 / σ√2π)e^( (-(x - µ)^2) / 2σ^2 )`.
+     * Only computes pdf of a distribution with µ = 0 and σ = 1.
+     *
+     * @custom:error Maximum error of 1.2e-7.
+     * @custom:source https://mathworld.wolfram.com/ProbabilityDensityFunction.html.
      */
     function pdf(int256 x) internal pure returns (int256 z) {
         int256 e;
         assembly {
-            e := sdiv(mul(add(not(x), 1), x), TWO)
+            e := sdiv(mul(add(not(x), 1), x), TWO) // (-x * x) / 2.
         }
         e = FixedPointMathLib.expWad(e);
 
@@ -298,8 +337,12 @@ library Gaussian {
 
     /**
      * @notice Approximation of the Percent Point Function.
-     * @dev
-     * @custom:source
+     *
+     * @dev Equal to `D(x)^(-1) = µ - σ√2(ierfc(2x))`.
+     * Only computes ppf of a distribution with µ = 0 and σ = 1.
+     *
+     * @custom:error Maximum error of 1.2e-7.
+     * @custom:source https://mathworld.wolfram.com/NormalDistribution.html.
      */
     function ppf(int256 x) internal view returns (int256 z) {
         assembly {
@@ -310,7 +353,7 @@ library Gaussian {
 
         assembly {
             let res := sdiv(mul(SQRT2, _ierfc), ONE)
-            z := add(1, not(res))
+            z := add(not(res), 1) // -res.
         }
     }
 }
