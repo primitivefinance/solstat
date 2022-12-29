@@ -1,14 +1,14 @@
 # Primitive Releases SolStat
 
-SolStat is a Math library written in solidity for statistical function approximations. The library is composed of three core contracts; Bisection.sol, Gaussian.sol, and Invariant.sol. We will go over each of these contracts and their testing suites. We at Primitive use these contracts to support development with RMM-01s unique trading function, which utilizes the cumulative distribution function(CDF) of the normal distribution denoted by the greek capital letter Phi($\Phi$) in the literature [1,2]. You may recognize the normal or Gaussian distribution as the bell curve. This distribution is significant in modeling real-valued random numbers of unknown distributions. Within the RMM-01 trading function and options pricing, the CDF is used to model random price movement of a Markov process. Since price paths are commonly modeled with markovian proccesses, we believe that the greater community will find value in this library.
+SolStat is a Math library written in solidity for statistical function approximations. The library is composed of three core contracts; Bisection.sol, Gaussian.sol, and Invariant.sol. We will go over each of these contracts and their testing suites. We at Primitive use these contracts to support development with RMM-01s unique trading function, which utilizes the cumulative distribution function (CDF) of the normal distribution denoted by the greek capital letter Phi($\Phi$) in the literature [1,2]. You may recognize the normal or Gaussian distribution as the bell curve. This distribution is significant in modeling real-valued random numbers of unknown distributions. Within the RMM-01 trading function and options pricing, the CDF is used to model random price movement of a Markov process. Since price paths are commonly modeled with markovian proccesses, we believe that the greater community will find value in this library.
 
 ## Irrational Functions
 
 The primary reason for utilizing these approximation algorithms is that computers have trouble expressing irrational functions. This is because irrational numbers have an infinite number of decimals. Some examples of irrational numbers are $\pi$ and $\sqrt(2)$. This only becomes a challenge when we try to compute these numbers. This is because computers don't have an infinite amount of memory. Thus mathematicians and computer scientists have developed a variety of approximation algorithms to achieve varying degrees of speed and accuracy when approximating these irrational functions. These algorithms are commonly iterative and achieve greater accuracy with more iterations.
 
-## Computational Limitations
+## Computational Constraints
 
-In classical computing, our computational resources have become [abundant](https://en.wikipedia.org/wiki/Moore%27s_law), allowing us the liberty to iterate these algorithms to achieve our desired accuracy. However, the [Ethereum Virtual Machine (EVM)](https://ethereum.org/en/developers/docs/evm/) has a necessary monetary cost of computation. This computational environment has monetarily motivated developers to find efficient algorithms and tricks to reduce their applications' computational overhead (and thus the cost of computation).
+In classical computing, our computational resources have become [abundant](https://en.wikipedia.org/wiki/Moore%27s_law), allowing us the liberty to iterate these algorithms to achieve our desired accuracy. However, the [Ethereum Virtual Machine (EVM)](https://ethereum.org/en/developers/docs/evm/) has a necessary monetary cost of computation. This computational environment has monetarily motivated developers to find efficient algorithms and hacks to reduce their applications' computational overhead (and thus the cost of computation).
 
 ## `Bisection.sol`
 
@@ -18,7 +18,7 @@ This contract contains the logic for the [bisection root finding algorithm](http
 `eps` The Error of the root computed compared to the actual root.
 `max` The maximum number of iterations before exiting the loop.
 `fx` Function to find the root of such that $f(x) = 0$.
-The function returns a root solution within the error of `eps` to $f(x) = 0$. This method is robust, reliable, and runs in O(logN) time. There are known root-finding algorithms with faster convergence.
+The function returns a root solution within the error of `eps` to $f(x) = 0$. This method is robust, reliable, and runs in $O(log(n))$ time. There are known root-finding algorithms with faster convergence.
 
 ## `Gaussian.sol`
 
@@ -26,7 +26,7 @@ This contract implements a number of functions important to the gaussian distrib
 
 ### Cumulative Distribution Function
 
-The implementation of the CDF aproximation algorithm takes in a random variable as a single parameter. The function depends on a special helper functions known as the error function `erf`. The error function’s identity is `erfc(-x) = 2 - erfc(x)` and has a small collection of unique properties:
+The implementation of the CDF aproximation algorithm takes in a random variable $x$ as a single parameter. The function depends on a special helper functions known as the error function `erf`. The error function’s identity is `erfc(-x) = 2 - erfc(x)` and has a small collection of unique properties:
 
 erfc(-$\infty$) = 2
 
@@ -34,17 +34,21 @@ erfc(0) = 1
 
 erfc($\infty$) = 0
 
-The reference implementation is on p221 of Numerical Recipes in section C 2e. A helpful resource is this [wolfram notebook](https://mathworld.wolfram.com/Erfc.html).
+The reference implementation for the error function is on p221 of Numerical Recipes in section C 2e. A helpful resource is this [wolfram notebook](https://mathworld.wolfram.com/Erfc.html).
 
 ### Probability Density Function
 
-We also implement the calculation of the Probability Density Function(PPF) which is mathematically interpeted as $Z(x) = \frac{1}{\sigma\sqrt{2\pi}}e^{\frac{-(x - \mu)^2}{2\sigma^2}}$. This implementation has a maximum error bound of of $1.2e-7$ and can be refrenced in this [wofram notebook](https://mathworld.wolfram.com/ProbabilityDensityFunction.html).
+The library also supports an approximation of the Probability Density Function(PPF) which is mathematically interpeted as $Z(x) = \frac{1}{\sigma\sqrt{2\pi}}e^{\frac{-(x - \mu)^2}{2\sigma^2}}$. This implementation has a maximum error bound of of $1.2e-7$ and can be refrenced in this [wofram notebook](https://mathworld.wolfram.com/ProbabilityDensityFunction.html).
 
-### Percent Point Function
+### Percent Point Function / Quantile Function
 
-Furthermore we compute an approximationg for the Percent Point Function(PPF) mathmatically defined as $D(x)^(-1) = \mu - \sigma\sqrt{2}(ierfc(2x))$.
+Furthermore we implemented aproximation algorithms for the Percent Point Function(PPF) sometimes known as the inverse CDF or the quantile function. The function is mathmatically defined as $D(x) = \mu - \sigma\sqrt{2}(ierfc(2x))$, has a maximum error of `1.2e-7`, and depends on the inverse error function `ierf` which satisfies `ierfc(erfc(x)) = erfc(ierfc(x))`. The invers error function, defined as `ierfc(1 - x) = ierf(x)`, has a domain of in the interval $0 < x < 2$ and has some unique properties:
 
-There error function has an inverse function, `ierf`, that is also an important component in the
+ierfc(0) = $\infty$
+
+ierfc(1) = 0
+
+ierfc(2) = -$\infty$
 
 ## `Invariant.sol`
 
