@@ -1,9 +1,65 @@
-# SolStat
+# Primitive Releases SolStat
 
-SolStat is a math library written in solidity for statistical function approximations. The library is modeled off of algorithms from [Numerical Recipies](https://e-maxx.ru/bookz/files/numerical_recipes.pdf), which originate from the [Handbook of Mathematical Functions](https://personal.math.ubc.ca/~cbm/aands/abramowitz_and_stegun.pdf) which are implemented in several libraries like the [Gaussian](https://github.com/errcw/gaussian) JS library. This library is consists of two primary components, `Bisection.sol` and `Gaussian.sol`. These approximation algorithms have been used for research, development, and testing at [Primitive](https://primitive.xyz/). The motivation of the development of this library is grounded in the support of the the RMM-01 trading function. RMM-01 trading function utilizes the irrational normal cumulative distribution function, which needs to be approximated to acceptable accuracy bounds. For more information on the details of this trading function please see the [whitepaper](https://primitive.xyz/whitepaper-rmm-01.pdf).
+SolStat is a Math library written in solidity for statistical function approximations. The library is composed of three core contracts; Bisection.sol, Gaussian.sol, and Invariant.sol. We will go over each of these contracts and their testing suites. We at Primitive use these contracts to support development with RMM-01s unique trading function, which utilizes the cumulative distribution function(CDF) of the normal distribution denoted by the greek capital letter Phi($\Phi$) in the literature [1,2]. You may recognize the normal or Gaussian distribution as the bell curve. This distribution is significant in modeling real-valued random numbers of unknown distributions. Within the RMM-01 trading function and options pricing, the CDF is used to model random price movement of a Markov process. Since price paths are commonly modeled with markovian proccesses, we believe that the greater community will find value in this library.
 
-Since a markov processes have a gaussian stationary distribution, and price paths are commonly modeled with markovian proccesses, we believe that the greater community will find value in this library.
+## Irrational Functions
 
-## Differential Testing
+The primary reason for utilizing these approximation algorithms is that computers have trouble expressing irrational functions. This is because irrational numbers have an infinite number of decimals. Some examples of irrational numbers are $\pi$ and $\sqrt(2)$. This only becomes a challenge when we try to compute these numbers. This is because computers don't have an infinite amount of memory. Thus mathematicians and computer scientists have developed a variety of approximation algorithms to achieve varying degrees of speed and accuracy when approximating these irrational functions. These algorithms are commonly iterative and achieve greater accuracy with more iterations.
 
-In addition to unit tests, We leveraged [foundry](https://github.com/foundry-rs/foundry)'s support of differential testing for this library. This library used differential testing against the javascript gaussian library to detect anomalies and varying bugs. This library used differential testing against the javascript gaussian library to detect anomalies and varying bugs. This helped us to be confident in the performance and implementation of the library.
+## Computational Limitations
+
+In classical computing, our computational resources have become [abundant](https://en.wikipedia.org/wiki/Moore%27s_law), allowing us the liberty to iterate these algorithms to achieve our desired accuracy. However, the [Ethereum Virtual Machine (EVM)](https://ethereum.org/en/developers/docs/evm/) has a necessary monetary cost of computation. This computational environment has monetarily motivated developers to find efficient algorithms and tricks to reduce their applications' computational overhead (and thus the cost of computation).
+
+## `Bisection.sol`
+
+This contract contains the logic for the [bisection root finding algorithm](https://en.wikipedia.org/wiki/Bisection_method). This algorithm can be applied to any continuous function to help find its roots. Some square roots are not rational numbers, and thus we would like to be able to find a root within some preferred accuracy bound given our computational constraints. The algorithm works by specifying an interval known to contain the root, bisecting the interval, and then selecting the subinterval in which the function changes sign. In the implementation of this algorithm, the parameters are:
+`ain` Initial value greater than root. (To the left of).
+`bin` Initial value less than root. (To the right of).
+`eps` The Error of the root computed compared to the actual root.
+`max` The maximum number of iterations before exiting the loop.
+`fx` Function to find the root of such that $f(x) = 0$.
+The function returns a root solution within the error of `eps` to $f(x) = 0$. This method is robust, reliable, and runs in O(logN) time. There are known root-finding algorithms with faster convergence.
+
+## `Gaussian.sol`
+
+This contract implements a number of functions important to the gaussian distributions. Importantly all these implementations are only for a mean $\mu = 0$ and variance $\sigma = 1$. These implementations are based on the [Numerical Recipes](https://e-maxx.ru/bookz/files/numerical_recipes.pdf) textbook and its C implementation. [Numerical Recipes](https://e-maxx.ru/bookz/files/numerical_recipes.pdf) cites the original text by Abramowitz and Stegun, "[Handbook of Mathematical Functions](https://personal.math.ubc.ca/~cbm/aands/abramowitz_and_stegun.pdf)," which should be read to understand these unique functions and the implications of their numerical approximations. This implementation was also inspired by the [javascript Gausian library](https://github.com/errcw/gaussian), which implements the same algorithm.
+
+### Cumulative Distribution Function
+
+The implementation of the CDF aproximation algorithm takes in a random variable as a single parameter. The function depends on a special helper functions known as the error function `erf`. The error function’s identity is `erfc(-x) = 2 - erfc(x)` and has a small collection of unique properties:
+
+erfc(-$\infty$) = 2
+
+erfc(0) = 1
+
+erfc($\infty$) = 0
+
+The reference implementation is on p221 of Numerical Recipes in section C 2e. A helpful resource is this [wolfram notebook](https://mathworld.wolfram.com/Erfc.html).
+
+### Probability Density Function
+
+We also implement the calculation of the Probability Density Function(PPF) which is mathematically interpeted as $Z(x) = \frac{1}{\sigma\sqrt{2\pi}}e^{\frac{-(x - \mu)^2}{2\sigma^2}}$. This implementation has a maximum error bound of of $1.2e-7$ and can be refrenced in this [wofram notebook](https://mathworld.wolfram.com/ProbabilityDensityFunction.html).
+
+### Percent Point Function
+
+Furthermore we compute an approximationg for the Percent Point Function(PPF) mathmatically defined as $D(x)^(-1) = \mu - \sigma\sqrt{2}(ierfc(2x))$.
+
+There error function has an inverse function, `ierf`, that is also an important component in the
+
+## `Invariant.sol`
+
+`Invariant.sol` is a contract used to compute the invariant of the RMM-01 trading function such that we compute $y$ in $y = K\Phi(\Phi^{⁻¹}(1-x) - \sigma\sqrt(\tau)) + k$. Notice how we need to compute the normal CDF of a quantity. For a more detailed perspective on the trading function, please see the whitepaper. This is an example of how we have used this library for our research, development, and testing of RMM-01. The function reverts if $x$ is greater than one and simplifies to $K(1+x) + k$ when $\tau$ is zero (at expiry). The function takes in five parameters
+`R_x`: The reserves of token $x$ per unit of liquidity, always within the bounds of $[0,1]$.
+`strk`: The strike price of the pool.
+`vol`: the implied volatility of the pool denoted by the lowercase greek letter sigma in finance literature.
+`tau`: The time until the pool expires. Once expired, there can be no swaps.
+`inv`: The current invariant given `R_x`.
+The function then returns the quantity of token y per unit of liquidity denoted `R_y`, which is always within the bounds of $[0, stk]$. This is a clear example of how one would use this library.
+
+## Differential Testing with Foundry
+
+We leveraged foundry's support of differential testing for this library. Differential testing is a popular technique that seeds inputs to different implementations of the same application and detects differences in their execution. Differential testing is an excellent complement to traditional software testing as it is well suited to detect semantic errors. This library used differential testing against the javascript gaussian library to detect anomalies and varying bugs. This helped us to be confident in the performance and implementation of the library.
+
+[1]: [Replicating Market Makers](https://arxiv.org/pdf/2103.14769.pdf)
+
+[2]: [Replicating Portfolios: Contstructing Permissionless Derivatives](https://arxiv.org/pdf/2205.09890.pdf)
