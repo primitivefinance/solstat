@@ -2,8 +2,8 @@ pragma solidity 0.8.13;
 
 import "forge-std/Test.sol";
 
-import "../../../contracts/Gaussian.sol";
-import "../../../contracts/test/TestInvariant.sol";
+import "src/Gaussian.sol";
+import "src/test/TestInvariant.sol";
 
 contract DifferentialTests is Test {
     enum DifferentialFunctions {

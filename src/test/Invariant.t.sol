@@ -3,8 +3,8 @@ pragma solidity 0.8.13;
 
 import "forge-std/Test.sol";
 
-import {Invariant} from "../../contracts/Invariant.sol";
-import {TestInvariant} from "../../contracts/test/TestInvariant.sol";
+import {Invariant} from "src/Invariant.sol";
+import {TestInvariant} from "src/test/TestInvariant.sol";
 
 contract TInvariant is Test {
     function _base(uint256 asset) internal pure returns (uint256) {

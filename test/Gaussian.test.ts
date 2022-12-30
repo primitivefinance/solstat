@@ -4,7 +4,7 @@ import { formatEther } from 'ethers/lib/utils'
 import gaussian from 'gaussian'
 import { BigNumberish } from 'ethers'
 
-import { erfc, ierfc } from './utils/gaussian-extended'
+import { erfc, ierfc } from './differential/scripts/gaussian-extended'
 
 var getInput = function (t, z) {
   return (

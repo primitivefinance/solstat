@@ -1,7 +1,7 @@
 import * as fs from 'fs'
 import { BigNumber, ethers } from 'ethers'
 import { formatEther, parseEther } from 'ethers/lib/utils'
-import { erfc, ierfc } from '../../utils/gaussian-extended'
+import { erfc, ierfc } from './gaussian-extended'
 import gaussian from 'gaussian'
 import { toBn } from 'evm-bn'
 import {
@@ -13,7 +13,7 @@ import {
   getY,
   getX,
   invariant,
-} from '../../utils/invariant'
+} from './invariant'
 
 const cdf = (x) => {
   return gaussian(0, 1).cdf(x)

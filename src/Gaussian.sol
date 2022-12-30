@@ -1,7 +1,7 @@
 // SPDX-License-Identifier: MIT
 pragma solidity 0.8.13;
 
-import "@rari-capital/solmate/src/utils/FixedPointMathLib.sol";
+import "solmate/utils/FixedPointMathLib.sol";
 
 function muli(
     int256 x,

@@ -3,7 +3,7 @@ pragma solidity 0.8.13;
 
 import "forge-std/Test.sol";
 
-import {Gaussian} from "../../contracts/Gaussian.sol";
+import {Gaussian} from "src/Gaussian.sol";
 
 contract TestGaussian is Test {
     function fx(int256 x) internal pure returns (int256) {
