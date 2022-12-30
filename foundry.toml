@@ -2,6 +2,7 @@
 solc = "0.8.13"
 via_ir = true
 optimizer_runs = 15000
+ffi = true # important!
 remappings = [
     'solmate/=lib/solmate/src/'
 ]

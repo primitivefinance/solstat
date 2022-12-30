@@ -2,7 +2,7 @@
 pragma solidity ^0.8.4;
 
 import "./Gaussian.sol";
-import "solmate/src/utils/FixedPointMathLib.sol";
+import "solmate/utils/FixedPointMathLib.sol";
 
 /**
  * @title Invariant of Primitive RMM.

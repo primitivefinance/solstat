@@ -7,9 +7,7 @@
     "src/**/*.sol"
   ],
   "scripts": {
-    "build": "yarn generate && yarn test",
-    "test": "forge test -vvv -ffi ",
-    "test:differential": "yarn generate && forge test --ffi -c test/differential/test/DifferentialTests.t.sol",
+    "build": "yarn generate",
     "lint": "prettier --write **.sol && prettier --write **.ts",
     "prepare": "husky install",
     "generate": "cd ./test/differential/scripts/ && npm run generate"
