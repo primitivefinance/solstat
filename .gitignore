@@ -6,11 +6,6 @@ coverage.json
 typechain-types
 yarn-error.log
 
-#Hardhat files
-artifacts/
-hh-cache/
-
-
 # Foundry
 cache
 out

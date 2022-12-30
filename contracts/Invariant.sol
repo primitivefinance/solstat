@@ -59,7 +59,7 @@ library Invariant {
     int256 internal constant HALF_SCALAR = 1e9;
 
     /**
-     * @dev Reverts when an input value is out of bounds of its acceptable ran ge.
+     * @dev Reverts when an input value is out of bounds of its acceptable range.
      */
     error OOB();
 
