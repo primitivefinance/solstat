@@ -87,7 +87,7 @@ library Invariant {
         uint256 vol,
         uint256 tau,
         int256 inv
-    ) internal view returns (uint256 R_y) {
+    ) internal pure returns (uint256 R_y) {
         if (R_x > uint256(ONE)) revert OOB();
         // Short circuits because tau != 0 is more likely.
         if (tau != 0) {
@@ -148,7 +148,7 @@ library Invariant {
         uint256 vol,
         uint256 tau,
         int256 inv
-    ) internal view returns (uint256 R_x) {
+    ) internal pure returns (uint256 R_x) {
         if (R_y > stk) revert OOB();
         // Short circuits because tau != 0 is more likely.
         if (tau != 0) {
@@ -199,7 +199,7 @@ library Invariant {
         uint256 stk,
         uint256 vol,
         uint256 tau
-    ) internal view returns (int256 inv) {
+    ) internal pure returns (int256 inv) {
         uint256 y = getY(R_x, stk, vol, tau, inv); // `inv` is 0 because we are solving `inv`, aka `k`.
         assembly {
             inv := sub(R_y, y)
