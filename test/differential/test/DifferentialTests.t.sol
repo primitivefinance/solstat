@@ -15,9 +15,9 @@ contract DifferentialTests is Test {
     }
 
     string internal constant DATA_DIR = "test/differential/data/";
-    int256 internal constant EPSILON = 1e5;
+    uint256 internal constant EPSILON = 1e5;
 
-    int256 _epsilon;
+    uint256 _epsilon;
     int256[129] _inputs;
     int256[129] _outputs;
     uint256[5][129] _invariantInputs;
@@ -127,7 +127,12 @@ contract DifferentialTests is Test {
             int256 input = _inputs[i];
             int256 output = _outputs[i];
             int256 computed = method(input);
-            assertEq(computed / _epsilon, output / _epsilon);
+            assertApproxEqAbs(
+                computed,
+                output,
+                _epsilon,
+                "computed-output-mismatch"
+            );
         }
     }
 
@@ -139,7 +144,12 @@ contract DifferentialTests is Test {
             uint256[5] memory input = _invariantInputs[i];
             int256 output = _outputs[i];
             int256 computed = method(input);
-            assertEq(computed / _epsilon, output / _epsilon);
+            assertApproxEqAbs(
+                computed,
+                output,
+                _epsilon,
+                "computed-output-mismatch"
+            );
         }
     }
 }

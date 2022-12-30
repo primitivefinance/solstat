@@ -15,9 +15,8 @@
     "typescript": "^4.6.3"
   },
   "scripts": {
-    "compile": "npx tsc --esModuleInterop ./*.ts",
-    "generate": "node generate.js",
-    "generate-erfc": "node generate_erfc.js",
-    "generate-erfc-129": "node generate_erfc.js"
+    "generate": "ts-node generate.ts",
+    "generate-erfc": "ts-node generate_erfc.ts",
+    "generate-erfc-129": "ts-node generate_erfc.ts"
   }
 }
