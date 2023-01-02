@@ -1,36 +1,11 @@
-[default]
+[profile.default]
+solc = "0.8.13"
 via_ir = true
-src = 'contracts'
-out = 'out'
-libs = ['lib', 'node_modules']
-test = 'test/foundry'
-remappings = [
-    'ds-test=lib/ds-test/src/',
-    'forge-std=lib/forge-std/src/',
-    'contracts/=contracts/',
-]
 optimizer_runs = 15000
-fuzz_runs = 256
-fuzz_max_local_rejects = 65536
-fuzz_max_global_rejects = 1024
+ffi = true # important!
+remappings = [
+    'solmate/=lib/solmate/src/'
+]
 
-[optimized]
-solc = '0.8.13'
-out = 'optimized-out'
-
-[test]
-solc = '0.8.13'
-via_ir = false
-src = 'test/foundry'
-gas_reports = ["*"]
-ffi = true
-fuzz_runs = 500
-
-[lite]
-out = 'optimized-out'
-via_ir = false
-fuzz_runs = 1000
-
-
-
-# See more config options https://github.com/gakonst/foundry/tree/master/config
+[fuzz]
+runs = 10000

@@ -12,6 +12,6 @@
   "ts-node": {
     "files": true
   },
-  "include": ["./test", "./scripts", "./types", "./typechain-types"],
-  "files": ["./hardhat.config.ts"]
+  "include": ["./test/**/*.ts", "./scripts", "./types"],
+  "exclude": ["./test/differential/scripts/node_modules"]
 }
