@@ -2,50 +2,7 @@
 pragma solidity 0.8.13;
 
 import "solmate/utils/FixedPointMathLib.sol";
-
-function muli(
-    int256 x,
-    int256 y,
-    int256 denominator
-) pure returns (int256 z) {
-    assembly {
-        // Store x * y in z for now.
-        z := mul(x, y)
-
-        // Equivalent to require(denominator != 0 && (x == 0 || (x * y) / x == y))
-        if iszero(
-            and(iszero(iszero(denominator)), or(iszero(x), eq(sdiv(z, x), y)))
-        ) {
-            revert(0, 0)
-        }
-
-        // Divide z by the denominator.
-        z := sdiv(z, denominator)
-    }
-}
-
-function muliWad(int256 x, int256 y) pure returns (int256 z) {
-    z = muli(x, y, 1e18);
-}
-
-function diviWad(int256 x, int256 y) pure returns (int256 z) {
-    z = muli(x, 1e18, y);
-}
-
-error Min();
-
-function abs(int256 input) pure returns (uint256 output) {
-    if (input == type(int256).min) revert Min();
-    if (input < 0) {
-        assembly {
-            output := add(not(input), 1)
-        }
-    } else {
-        assembly {
-            output := input
-        }
-    }
-}
+import "src/Units.sol";
 
 /**
  * @title Gaussian Math Library.
@@ -68,7 +25,9 @@ library Gaussian {
     using FixedPointMathLib for uint256;
 
     error Infinity();
+    error NegativeInfinity();
 
+    uint256 internal constant HALF_WAD = 0.5 ether;
     uint256 internal constant PI = 3_141592653589793238;
     int256 internal constant SQRT_2PI = 2_506628274631000502;
     int256 internal constant SIGN = -1;
@@ -349,6 +308,9 @@ library Gaussian {
      * @custom:source https://mathworld.wolfram.com/NormalDistribution.html.
      */
     function ppf(int256 x) internal pure returns (int256 z) {
+        if (x == int256(HALF_WAD)) return int256(0); // returns 3.75e-8, but we know it's zero.
+        if (x >= ONE) revert Infinity();
+        if (x == 0) revert NegativeInfinity();
         assembly {
             x := mul(x, 2)
         }

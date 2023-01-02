@@ -2,7 +2,7 @@
 pragma solidity 0.8.13;
 
 import "solmate/utils/FixedPointMathLib.sol";
-import "./Units.sol";
+import "src/Units.sol";
 
 /**
  * @title Gaussian Math Library
@@ -17,13 +17,10 @@ library Gaussian {
     using FixedPointMathLib for uint256;
 
     error Infinity();
-
-    struct Model {
-        uint256 mean;
-        uint256 variance;
-    }
+    error NegativeInfinity();
 
     uint256 internal constant WAD = 1 ether;
+    uint256 internal constant HALF_WAD = 0.5 ether;
     uint256 internal constant DOUBLE_WAD = 2 ether;
     uint256 internal constant PI = 3_141592653589793238;
     int256 internal constant SQRT_2PI = 2_506628274631000502;
@@ -149,6 +146,9 @@ library Gaussian {
     }
 
     function ppf(int256 x) internal pure returns (int256 z) {
+        if (x == int256(HALF_WAD)) return int256(0);
+        if (x >= ONE) revert Infinity();
+        if (x == 0) revert NegativeInfinity();
         int256 double = x * 2;
         int256 _ierfc = ierfc(double);
         int256 res = muliWad(SQRT2, _ierfc);
