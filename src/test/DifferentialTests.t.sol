@@ -2,8 +2,8 @@ pragma solidity 0.8.13;
 
 import "forge-std/Test.sol";
 
-import "../../../contracts/Gaussian.sol";
-import "../../../contracts/test/TestInvariant.sol";
+import "src/Gaussian.sol";
+import "src/test/HelperInvariant.sol";
 
 contract DifferentialTests is Test {
     enum DifferentialFunctions {
@@ -15,9 +15,9 @@ contract DifferentialTests is Test {
     }
 
     string internal constant DATA_DIR = "test/differential/data/";
-    int256 internal constant EPSILON = 1e5;
+    uint256 internal constant EPSILON = 1e5;
 
-    int256 _epsilon;
+    uint256 _epsilon;
     int256[129] _inputs;
     int256[129] _outputs;
     uint256[5][129] _invariantInputs;
@@ -109,16 +109,16 @@ contract DifferentialTests is Test {
 
     function customInvariant(uint256[5] memory args)
         internal
-        view
+        pure
         returns (int256 k)
     {
-        TestInvariant.Args memory invariantInputs;
+        HelperInvariant.Args memory invariantInputs;
         uint256 y = args[0];
         invariantInputs.x = args[1];
         invariantInputs.K = args[2];
         invariantInputs.o = args[3];
         invariantInputs.t = args[4];
-        k = TestInvariant.invariant(invariantInputs, y);
+        k = HelperInvariant.invariant(invariantInputs, y);
     }
 
     function _run(function(int256) view returns (int256) method) internal {
@@ -127,7 +127,12 @@ contract DifferentialTests is Test {
             int256 input = _inputs[i];
             int256 output = _outputs[i];
             int256 computed = method(input);
-            assertEq(computed / _epsilon, output / _epsilon);
+            assertApproxEqAbs(
+                computed,
+                output,
+                _epsilon,
+                "computed-output-mismatch"
+            );
         }
     }
 
@@ -139,7 +144,12 @@ contract DifferentialTests is Test {
             uint256[5] memory input = _invariantInputs[i];
             int256 output = _outputs[i];
             int256 computed = method(input);
-            assertEq(computed / _epsilon, output / _epsilon);
+            assertApproxEqAbs(
+                computed,
+                output,
+                _epsilon,
+                "computed-output-mismatch"
+            );
         }
     }
 }

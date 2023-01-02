@@ -26,28 +26,39 @@ library Bisection {
     ) internal pure returns (int256 root) {
         // Chosen `a` and `b` are incorrect.
         // False if ain * bin < 0, !(ain * bin < 0).
-        int256  fxa = fx(ain);
-        int256  fxb = fx(bin);
-        assembly { if   iszero(slt(mul(fxa, fxb), 0)) { revert(0, 0) } }
+        int256 fxa = fx(ain);
+        int256 fxb = fx(bin);
+        assembly {
+            if iszero(slt(mul(fxa, fxb), 0)) {
+                revert(0, 0)
+            }
+        }
 
-        int256  dif;
-        int256  itr;
-        assembly     {  dif := sub(bin, ain)          } // Are we getting closer to epsilon?
+        int256 dif;
+        int256 itr;
+        assembly {
+            dif := sub(bin, ain)
+        } // Are we getting closer to epsilon?
 
         do {
-            assembly { root := sdiv(add(ain, bin), 2) } // root = a + b / 2
+            assembly {
+                root := sdiv(add(ain, bin), 2)
+            } // root = a + b / 2
 
-            int256 fxr =  fx(root);
-            if    (fxr == 0) break;
-            fxa =          fx(ain);
+            int256 fxr = fx(root);
+            if (fxr == 0) break;
+            fxa = fx(ain);
 
             assembly {
-                switch slt(mul(fxr, fxa), 0)            // Decide which side to repeat, `a` or `b`.
-                case 1       { bin := root }            // 1 if fxr * fxa < 0
-                case 0       { ain := root }            // else 0
-                itr :=           add(itr, 1)            // Increment iterator.
+                switch slt(mul(fxr, fxa), 0) // Decide which side to repeat, `a` or `b`.
+                case 1 {
+                    bin := root
+                } // 1 if fxr * fxa < 0
+                case 0 {
+                    ain := root
+                } // else 0
+                itr := add(itr, 1) // Increment iterator.
             }
-
-        } while    (dif >= eps && itr < max);
+        } while (dif >= eps && itr < max);
     }
 }

@@ -3,7 +3,7 @@ pragma solidity 0.8.13;
 
 import "forge-std/Test.sol";
 
-import "../../contracts/Bisection.sol";
+import "src/Bisection.sol";
 
 contract TestBisection is Test {
     function fx(int256 x) internal pure returns (int256) {

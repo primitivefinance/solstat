@@ -1,7 +1,7 @@
 // SPDX-License-Identifier: MIT
 pragma solidity 0.8.13;
 
-import "@rari-capital/solmate/src/utils/FixedPointMathLib.sol";
+import "solmate/utils/FixedPointMathLib.sol";
 
 function muli(
     int256 x,
@@ -114,7 +114,7 @@ library Gaussian {
      * @custom:source Numerical Recipes in C 2e p221.
      * @custom:source https://mathworld.wolfram.com/Erfc.html.
      */
-    function erfc(int256 input) internal view returns (int256 output) {
+    function erfc(int256 input) internal pure returns (int256 output) {
         uint256 z = abs(input);
         int256 t;
         int256 step;
@@ -200,7 +200,7 @@ library Gaussian {
      * @custom:source Numerical Recipes 3e p265.
      * @custom:source https://mathworld.wolfram.com/InverseErfc.html.
      */
-    function ierfc(int256 x) internal view returns (int256 z) {
+    function ierfc(int256 x) internal pure returns (int256 z) {
         assembly {
             // x >= 2, iszero(x < 2 ? 1 : 0) ? 1 : 0.
             if iszero(slt(x, TWO)) {
@@ -301,16 +301,16 @@ library Gaussian {
      * @custom:error Maximum error of 1.2e-7.
      * @custom:source https://mathworld.wolfram.com/NormalDistribution.html.
      */
-    function cdf(int256 x) internal view returns (int256 z) {
+    function cdf(int256 x) internal pure returns (int256 z) {
         int256 negated;
         assembly {
             let res := sdiv(mul(x, ONE), SQRT2)
             negated := add(not(res), 1)
         }
 
-        int256 erfc = erfc(negated);
+        int256 _erfc = erfc(negated);
         assembly {
-            z := sdiv(mul(ONE, erfc), TWO)
+            z := sdiv(mul(ONE, _erfc), TWO)
         }
     }
 
@@ -344,7 +344,7 @@ library Gaussian {
      * @custom:error Maximum error of 1.2e-7.
      * @custom:source https://mathworld.wolfram.com/NormalDistribution.html.
      */
-    function ppf(int256 x) internal view returns (int256 z) {
+    function ppf(int256 x) internal pure returns (int256 z) {
         assembly {
             x := mul(x, 2)
         }
