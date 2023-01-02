@@ -115,7 +115,10 @@ contract TestInvariant is Test {
     }
 
     function testGetXGas() public logs_gas {
-        uint256 actual = HelperInvariant.getX(getArgs());
+        uint256 y = 308537538726e6;
+        HelperInvariant.Args memory args = getArgs();
+        args.x = y;
+        uint256 actual = HelperInvariant.getX(args);
         actual;
     }
 
@@ -154,6 +157,7 @@ contract TestInvariant is Test {
         uint256 sigma,
         uint256 tau
     ) public {
+        console.log("block time", block.timestamp);
         HelperInvariant.Args memory args = HelperInvariant.Args(
             _base(asset),
             _strike(strike),

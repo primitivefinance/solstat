@@ -53,6 +53,7 @@ library Invariant {
     using Gaussian for int256; // Uses the `cdf` and `pdf` functions.
     using FixedPointMathLib for uint256; // Uses the `sqrt` function.
 
+    uint256 internal constant WAD = 1 ether;
     int256 internal constant ONE = 1 ether;
     int256 internal constant YEAR = 31556952;
     int256 internal constant HALF_SCALAR = 1e9;
@@ -69,6 +70,10 @@ library Invariant {
      * Primary function use to compute the invariant.
      * Simplifies to `K(1 -x) + k` when time to expiry is zero.
      * Reverts if `R_x` is greater than one. Units are a fixed point number with 18 decimals.
+     *
+     * We handle some special cases, try this:
+     * `normalcdlower(normalicdlower(1) - 0.1)` in https://keisan.casio.com/calculator
+     * Gaussian.sol reverts for `ppf(1)` and `ppf(0)`, so we handle those cases.
      *
      * @param R_x Quantity of token reserve `x` within the bounds of [0, 1].
      * @param stk Strike price of the pool. Terminal price of asset `x` in the pool denominated in asset `y`.
@@ -87,9 +92,11 @@ library Invariant {
         uint256 tau,
         int256 inv
     ) internal pure returns (uint256 R_y) {
-        if (R_x > uint256(ONE)) revert OOB();
-        // Short circuits because tau != 0 is more likely.
+        if (R_x > WAD) revert OOB(); // Negative input for `ppf` is invalid.
+        if (R_x == WAD) return uint256(int256(stk) + inv); // For `ppf(0)` case, because 1 - R_x == 0, and `y = K * 1 + k` simplifies to `y = K + k`
+        if (R_x == 0) return uint256(inv); // For `ppf(1)` case, because 1 - 0 == 1, and `y = K * 0 + k` simplifies to `y = k`.
         if (tau != 0) {
+            // Short circuits because tau != 0 is more likely.
             uint256 sec;
             assembly {
                 sec := sdiv(mul(tau, ONE), YEAR) // Unit math: YEAR * SCALAR / YEAR = SCALAR.
@@ -126,7 +133,7 @@ library Invariant {
     /**
      * @notice Uses reserves `R_y` to compute reserves `R_x`.
      *
-     * @dev Computes `x` in `x = 1 - Φ(Φ⁻¹( (y + k) / K ) + σ√τ).
+     * @dev Computes `x` in `x = 1 - Φ(Φ⁻¹( (y + k) / K ) + σ√τ)`.
      * Not used in invariant function. Used for computing swap outputs.
      * Simplifies to `1 - ( (y + k) / K )` when time to expiry is zero.
      * Reverts if `R_y` is greater than one. Units are a fixed point number with 18 decimals.
@@ -147,8 +154,7 @@ library Invariant {
         uint256 vol,
         uint256 tau,
         int256 inv
-    ) internal pure returns (uint256 R_x) {
-        if (R_y > stk) revert OOB();
+    ) internal view returns (uint256 R_x) {
         // Short circuits because tau != 0 is more likely.
         if (tau != 0) {
             uint256 sec;
@@ -164,8 +170,14 @@ library Invariant {
 
             int256 phi;
             assembly {
-                phi := sdiv(add(mul(R_y, ONE), inv), stk) // (y + k) / K.
+                phi := sdiv(mul(add(R_y, inv), ONE), stk) // (y + k) / K.
             }
+
+            if (phi < 0) revert OOB(); // Negative input for `ppf` is invalid.
+            if (phi > ONE) revert OOB();
+            if (phi == ONE) return 0; // `x = 1 - Φ(Φ⁻¹( 1 ) + σ√τ)` simplifies to  `x = 0`.
+            if (phi == 0) return WAD; // `x = 1 - Φ(Φ⁻¹( 0 ) + σ√τ)` simplifies to `x = 1`.
+
             phi = phi.ppf(); // Φ⁻¹( (y + k) / K ).
 
             int256 cdf;

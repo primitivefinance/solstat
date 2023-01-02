@@ -16,6 +16,9 @@ jobs:
         with:
           version: nightly
 
+      - name: Install deps
+        run: yarn install
+
       - name: Build
         run: yarn build
 

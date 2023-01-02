@@ -68,7 +68,9 @@ library Gaussian {
     using FixedPointMathLib for uint256;
 
     error Infinity();
+    error NegativeInfinity();
 
+    uint256 internal constant HALF_WAD = 0.5 ether;
     uint256 internal constant PI = 3_141592653589793238;
     int256 internal constant SQRT_2PI = 2_506628274631000502;
     int256 internal constant SIGN = -1;
@@ -349,6 +351,9 @@ library Gaussian {
      * @custom:source https://mathworld.wolfram.com/NormalDistribution.html.
      */
     function ppf(int256 x) internal pure returns (int256 z) {
+        if (x == int256(HALF_WAD)) return int256(0); // returns 3.75e-8, but we know it's zero.
+        if (x >= ONE) revert Infinity();
+        if (x == 0) revert NegativeInfinity();
         assembly {
             x := mul(x, 2)
         }
