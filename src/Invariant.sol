@@ -22,17 +22,17 @@ import "./Gaussian.sol";
  * `tau` - Time until the pool expires. Amount of seconds until the pool's curve becomes flat around `stk`.
  * `inv` - Invariant of the pool. Difference between theoretical $ value and actual $ value per liquidity.
  *
- * `SCALAR` - Signed or unsigned fixed point number with up to 18 decimals and up to 256 total bits wide.
- * `YEAR`   - Equal to the amount of seconds in a year. Used in `invariant` function.
+ * `WAD` - Signed or unsigned fixed point number with up to 18 decimals and up to 256 total bits wide.
+ * `YEAR`- Equal to the amount of seconds in a year. Used in `invariant` function.
  *
  * // -------------------- Units ------------------------ //
  *
- * `R_x` - Units are unsigned SCALAR. Represents value of tokens, decimals matter.
- * `R_y` - Units are unsigned SCALAR. Represents value of tokens, decimals matter.
- * `stk` - Units are unsigned SCALAR. Represents value of tokens, decimals matter.
- * `vol` - Units are unsigned SCALAR. Represents a percentage where 100% = SCALAR.
- * `tau` - Units are YEAR. Represents a time unit in which `1.0` is equal to YEAR.
- * `inv` - Units are signed SCALAR. Initial value of zero and decreases over time.
+ * `R_x` - Units are unsigned WAD. Represents value of tokens, decimals matter.
+ * `R_y` - Units are unsigned WAD. Represents value of tokens, decimals matter.
+ * `stk` - Units are unsigned WAD. Represents value of tokens, decimals matter.
+ * `vol` - Units are unsigned WAD. Represents a percentage in which 100% = WAD.
+ * `tau` - Units are YEAR. Represents a time unit which `1.0` is equal to YEAR.
+ * `inv` - Units are signed WAD. Initial value of zero and decreases over time.
  *
  * // -------------------- Denoted By ----------------- //
  *
@@ -137,7 +137,9 @@ library Invariant {
      * @dev Computes `x` in `x = 1 - Φ(Φ⁻¹( (y + k) / K ) + σ√τ)`.
      * Not used in invariant function. Used for computing swap outputs.
      * Simplifies to `1 - ( (y + k) / K )` when time to expiry is zero.
-     * Reverts if `R_y` is greater than one. Units are a fixed point number with 18 decimals.
+     * Reverts if `R_y` is greater than one. Units are WAD.
+     *
+     * Dangerous! There are important bounds to using this function.
      *
      * @param R_y Quantity of token reserve `y` within the bounds of [0, stk].
      * @param stk Strike price of the pool. Terminal price of asset `x` in the pool denominated in asset `y`.

@@ -1,5 +1,7 @@
 # How to use
 
+Requirements: forge, node >=v16.0.0
+
 ```
 yarn install
 forge install

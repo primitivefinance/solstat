@@ -16,7 +16,7 @@ function abs(int256 input) pure returns (uint256 output) {
     }
 }
 
-/// @dev From solmate, changes last `div` to `sdiv`.
+/// @dev From solmate@v7, changes last `div` to `sdiv`.
 function muli(
     int256 x,
     int256 y,
