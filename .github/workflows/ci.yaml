@@ -24,3 +24,5 @@ jobs:
 
       - name: Run tests
         run: forge test
+        env:
+          FOUNDRY_FUZZ_RUNS: 10000
