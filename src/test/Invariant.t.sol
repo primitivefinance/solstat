@@ -7,7 +7,7 @@ import {Invariant} from "src/Invariant.sol";
 import {Invariant as Ref} from "src/reference/ReferenceInvariant.sol";
 import {HelperInvariant} from "src/test/HelperInvariant.sol";
 
-contract TInvariant is Test {
+contract TestInvariant is Test {
     function testReference_getY_Equality(
         uint256 asset,
         uint256 strike,
@@ -119,9 +119,30 @@ contract TInvariant is Test {
         actual;
     }
 
-    function HelperInvariantGas() public logs_gas {
+    function testHelperInvariantGas() public logs_gas {
         uint256 y = 308537538726e6;
         int256 actual = HelperInvariant.invariant(getArgs(), y);
+        actual;
+        y;
+    }
+
+    function testReferenceGetYGas() public logs_gas {
+        HelperInvariant.Args memory args = getArgs();
+        uint256 actual = Ref.getY(args.x, args.K, args.o, args.t, 0);
+        actual;
+    }
+
+    function testReferenceGetXGas() public logs_gas {
+        uint256 y = 308537538726e6;
+        HelperInvariant.Args memory args = getArgs();
+        uint256 actual = Ref.getX(y, args.K, args.o, args.t, 0);
+        actual;
+    }
+
+    function testReferenceHelperInvariantGas() public logs_gas {
+        uint256 y = 308537538726e6;
+        HelperInvariant.Args memory args = getArgs();
+        int256 actual = Ref.invariant(y, args.x, args.K, args.o, args.t);
         actual;
         y;
     }
