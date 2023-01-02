@@ -38,7 +38,6 @@
     "node": ">=16.0.0"
   },
   "lint-staged": {
-    "*.sol": "prettier --write",
     "*.ts": "prettier --write"
   },
   "private": "false",

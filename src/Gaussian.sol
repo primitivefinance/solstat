@@ -67,6 +67,8 @@ library Gaussian {
     using FixedPointMathLib for int256;
     using FixedPointMathLib for uint256;
 
+    error Infinity();
+
     uint256 internal constant PI = 3_141592653589793238;
     int256 internal constant SQRT_2PI = 2_506628274631000502;
     int256 internal constant SIGN = -1;
@@ -226,7 +228,9 @@ library Gaussian {
             }
         }
 
-        int256 ln = FixedPointMathLib.lnWad(diviWad(xx, TWO));
+        int256 logInput = diviWad(xx, TWO);
+        if (logInput == 0) revert Infinity();
+        int256 ln = FixedPointMathLib.lnWad(logInput);
         uint256 t = uint256(muliWad(NEGATIVE_TWO, ln)).sqrt();
         assembly {
             t := mul(t, HALF_SCALAR)

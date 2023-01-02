@@ -6,3 +6,6 @@ ffi = true # important!
 remappings = [
     'solmate/=lib/solmate/src/'
 ]
+
+[fuzz]
+runs = 1000
