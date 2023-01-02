@@ -51,7 +51,7 @@ function abs(int256 input) pure returns (uint256 output) {
  * @title Gaussian Math Library.
  * @author @alexangelj
  *
- * @notice Models the normal distribution using the special Compimentary Error Function.
+ * @notice Models the normal distribution using the special Complimentary Error Function.
  *
  * @dev Only implements a distribution with mean (µ) = 0 and variance (σ) = 1.
  * Uses Numerical Recipes as a framework and reference C implemenation.
