@@ -16,5 +16,8 @@ jobs:
         with:
           version: nightly
 
+      - name: Build
+        run: yarn build
+
       - name: Run tests
         run: forge test

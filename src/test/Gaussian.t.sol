@@ -10,10 +10,6 @@ int256 constant HIGH = int256(10 ether);
 int256 constant LOW = -int256(10 ether);
 
 contract TestGaussian is Test {
-    function erfc(int256 input) public pure returns (int256) {
-        return Gaussian.erfc(input);
-    }
-
     function testReference_erfc_Equality(int256 input) public {
         vm.assume(input < HIGH);
         vm.assume(input > LOW);
@@ -56,16 +52,15 @@ contract TestGaussian is Test {
         assertEq(actual, expected, "ppf-inequality");
     }
 
-    function testERFCGas() public logs_gas {
-        int256 actual = Gaussian.erfc(-1);
-        actual;
-    }
-
     function testERFC() public {
         int256 actual = Gaussian.erfc(-1e18);
         int256 expected = 1842700787760006725;
-        emit log_int(actual);
-        assertEq(actual, expected);
+        assertEq(actual, expected, "erfc");
+    }
+
+    function testERFCGas() public logs_gas {
+        int256 actual = Gaussian.erfc(-1);
+        actual;
     }
 
     function testIERFCGas() public logs_gas {
