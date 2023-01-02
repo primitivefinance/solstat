@@ -5,6 +5,7 @@ coverage
 coverage.json
 typechain-types
 yarn-error.log
+dist/
 
 # Foundry
 cache
