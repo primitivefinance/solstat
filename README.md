@@ -1,6 +1,6 @@
 # Primitive Releases SolStat
 
-SolStat is a Math library written in solidity for statistical function approximations. The library is composed of three core contracts; Bisection.sol, Gaussian.sol, and Invariant.sol. We will go over each of these contracts and their testing suites. We at Primitive use these contracts to support development with RMM-01s unique trading function, which utilizes the cumulative distribution function (CDF) of the normal distribution denoted by the greek capital letter Phi($\Phi$) in the literature [1,2]. You may recognize the normal or Gaussian distribution as the bell curve. This distribution is significant in modeling real-valued random numbers of unknown distributions. Within the RMM-01 trading function and options pricing, the CDF is used to model random price movement of a Markov process. Since price paths are commonly modeled with markovian proccesses, we believe that the greater community will find value in this library.
+SolStat is a Math library written in solidity for statistical function approximations. The library is composed of two core libraries; Gaussian.sol, and Invariant.sol. We will go over each of these libraries and their testing suites. We at Primitive use these libraries to support development with RMM-01s unique trading function, which utilizes the cumulative distribution function (CDF) of the normal distribution denoted by the greek capital letter Phi($\Phi$) in the literature [1,2]. You may recognize the normal or Gaussian distribution as the bell curve. This distribution is significant in modeling real-valued random numbers of unknown distributions. Within the RMM-01 trading function and options pricing, the CDF is used to model random price movement of a Markov process. Since price paths are commonly modeled with markovian proccesses, we believe that the greater community will find value in this library.
 
 ## Irrational Functions
 
@@ -9,16 +9,6 @@ The primary reason for utilizing these approximation algorithms is that computer
 ## Computational Constraints
 
 In classical computing, our computational resources have become [abundant](https://en.wikipedia.org/wiki/Moore%27s_law), allowing us the liberty to iterate these algorithms to achieve our desired accuracy. However, the [Ethereum Virtual Machine (EVM)](https://ethereum.org/en/developers/docs/evm/) has a necessary monetary cost of computation. This computational environment has monetarily motivated developers to find efficient algorithms and hacks to reduce their applications' computational overhead (and thus the cost of computation).
-
-## `Bisection.sol`
-
-This contract contains the logic for the [bisection root finding algorithm](https://en.wikipedia.org/wiki/Bisection_method). This algorithm can be applied to any continuous function to help find its roots. Some square roots are not rational numbers, and thus we would like to be able to find a root within some preferred accuracy bound given our computational constraints. The algorithm works by specifying an interval known to contain the root, bisecting the interval, and then selecting the subinterval in which the function changes sign. In the implementation of this algorithm, the parameters are:
-`ain` Initial value greater than root. (To the left of).
-`bin` Initial value less than root. (To the right of).
-`eps` The Error of the root computed compared to the actual root.
-`max` The maximum number of iterations before exiting the loop.
-`fx` Function to find the root of such that $f(x) = 0$.
-The function returns a root solution within the error of `eps` to $f(x) = 0$. This method is robust, reliable, and runs in $O(log(n))$ time. There are known root-finding algorithms with faster convergence.
 
 ## `Gaussian.sol`
 
