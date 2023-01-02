@@ -15,7 +15,7 @@ library HelperInvariant {
         y = Invariant.getY(args.x, args.K, args.o, args.t, 0);
     }
 
-    function getX(Args memory args) public view returns (uint256 x) {
+    function getX(Args memory args) public pure returns (uint256 x) {
         x = Invariant.getX(args.x, args.K, args.o, args.t, 0);
     }
 

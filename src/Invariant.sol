@@ -54,6 +54,7 @@ library Invariant {
     using FixedPointMathLib for uint256; // Uses the `sqrt` function.
 
     uint256 internal constant WAD = 1 ether;
+    uint256 internal constant DOUBLE_WAD = 2 ether;
     int256 internal constant ONE = 1 ether;
     int256 internal constant YEAR = 31556952;
     int256 internal constant HALF_SCALAR = 1e9;
@@ -154,7 +155,7 @@ library Invariant {
         uint256 vol,
         uint256 tau,
         int256 inv
-    ) internal view returns (uint256 R_x) {
+    ) internal pure returns (uint256 R_x) {
         // Short circuits because tau != 0 is more likely.
         if (tau != 0) {
             uint256 sec;

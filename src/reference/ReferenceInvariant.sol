@@ -66,7 +66,7 @@ library Invariant {
         uint256 vol,
         uint256 tau,
         int256 inv
-    ) internal view returns (uint256 R_x) {
+    ) internal pure returns (uint256 R_x) {
         if (tau != 0) {
             uint256 sec = tau.divWadDown(uint256(YEAR));
 
