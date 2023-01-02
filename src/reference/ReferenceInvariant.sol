@@ -1,9 +1,7 @@
 // SPDX-License-Identifier: MIT
 pragma solidity 0.8.13;
 
-import "./Units.sol";
 import "./ReferenceGaussian.sol";
-import "solmate/utils/FixedPointMathLib.sol";
 
 /**
  * @title Invariant of Primitive RMM.
@@ -11,84 +9,82 @@ import "solmate/utils/FixedPointMathLib.sol";
  */
 library Invariant {
     using Gaussian for int256;
+    using FixedPointMathLib for uint256;
 
+    uint256 internal constant WAD = 1 ether;
+    int256 internal constant ONE = 1 ether;
     int256 internal constant YEAR = 31556952;
-    int256 internal constant ONE = 1e18;
     int256 internal constant HALF_SCALAR = 1e9;
 
-    struct Args {
-        int256 x;
-        int256 K;
-        int256 o;
-        int256 t;
-    }
-
-    function getY(Args memory args) internal view returns (int256 y) {
-        y = getY(args.x, args.K, args.o, args.t);
-    }
-
-    error Bad();
+    error OOB();
 
     function getY(
-        int256 x,
-        int256 K,
-        int256 o,
-        int256 t
-    ) internal view returns (int256 y) {
-        if (t < 0) revert Bad();
-        if (t != 0) {
-            int256 sec = diviWad(t, YEAR);
-            int256 vol = int256(FixedPointMathLib.sqrt(uint256(sec)));
-            assembly {
-                vol := mul(vol, HALF_SCALAR)
-            }
+        uint256 R_x,
+        uint256 stk,
+        uint256 vol,
+        uint256 tau,
+        int256 inv
+    ) internal pure returns (uint256 R_y) {
+        if (R_x > WAD) revert OOB();
+        if (tau < 0) revert OOB(); // todo: add to non-reference?
 
-            vol = muliWad(o, vol);
+        if (tau != 0) {
+            uint256 sec = tau.divWadDown(uint256(YEAR));
+            uint256 sdr = sec.sqrt();
+            sdr = sdr * uint256(HALF_SCALAR);
+            sdr = vol.mulWadDown(sdr);
 
-            int256 phi = (ONE - x).ppf();
-            int256 input = phi - vol;
-            y = muliWad(K, input.cdf());
+            int256 phi = ONE - int256(R_x);
+            phi = phi.ppf();
+
+            int256 input = phi - int256(sdr);
+            input = input.cdf();
+
+            R_y = uint256(muliWad(int256(stk), input) + inv);
         } else {
-            y = muliWad(K, ONE - x);
+            R_y = uint256(muliWad(int256(stk), ONE - int256(R_x)) + inv);
         }
     }
 
-    function invariant(Args memory args, int256 y)
-        internal
-        view
-        returns (int256 k)
-    {
-        k = invariant(y, args.x, args.K, args.o, args.t);
-    }
-
     function invariant(
-        int256 y,
-        int256 x,
-        int256 K,
-        int256 o,
-        int256 t
-    ) internal view returns (int256 k) {
-        int256 y0 = getY(x, K, o, t);
+        uint256 R_y,
+        uint256 R_x,
+        uint256 stk,
+        uint256 vol,
+        uint256 tau
+    ) internal pure returns (int256 inv) {
+        uint256 y = getY(R_x, stk, vol, tau, inv);
         assembly {
-            k := sub(y, y0)
+            inv := sub(R_y, y)
         }
     }
 
     function getX(
-        int256 y,
-        int256 K,
-        int256 o,
-        int256 t
-    ) internal view returns (int256 x) {
-        int256 sec = diviWad(t, YEAR);
-        int256 vol = int256(FixedPointMathLib.sqrt(uint256(sec)));
-        assembly {
-            vol := mul(vol, HALF_SCALAR)
-        }
+        uint256 R_y,
+        uint256 stk,
+        uint256 vol,
+        uint256 tau,
+        int256 inv
+    ) internal pure returns (uint256 R_x) {
+        if (R_y > stk) revert OOB();
 
-        vol = muliWad(o, vol);
-        int256 phi = diviWad(y, K).ppf();
-        int256 input = phi + vol;
-        x = ONE - input.cdf();
+        if (tau != 0) {
+            uint256 sec = tau.divWadDown(uint256(YEAR));
+
+            uint256 sdr = sec.sqrt();
+            sdr = sdr * uint256(HALF_SCALAR);
+            sdr = vol.mulWadDown(sdr);
+
+            int256 phi = diviWad(int256(R_y), int256(stk));
+            phi = phi.ppf();
+
+            int256 input = phi + int256(sdr);
+            input = input.cdf();
+            R_x = uint256(ONE - input);
+        } else {
+            int256 numerator = int256(R_y) + inv;
+            int256 denominator = int256(stk);
+            R_x = uint256(ONE - diviWad(numerator, denominator));
+        }
     }
 }

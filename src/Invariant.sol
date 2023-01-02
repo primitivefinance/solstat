@@ -53,7 +53,7 @@ library Invariant {
     using Gaussian for int256; // Uses the `cdf` and `pdf` functions.
     using FixedPointMathLib for uint256; // Uses the `sqrt` function.
 
-    int256 internal constant ONE = 1e18;
+    int256 internal constant ONE = 1 ether;
     int256 internal constant YEAR = 31556952;
     int256 internal constant HALF_SCALAR = 1e9;
 
