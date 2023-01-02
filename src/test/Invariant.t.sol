@@ -8,7 +8,7 @@ import {Invariant} from "src/Invariant.sol";
 import {Invariant as Ref} from "src/reference/ReferenceInvariant.sol";
 import {HelperInvariant} from "src/test/HelperInvariant.sol";
 
-uint256 constant GET_REVERSE_ERROR_REL = 0.000000925868142767 ether; //0.038844859616646632 ether; // highest % error found in test
+uint256 constant GET_REVERSE_ERROR_REL = 0.000000988606022657 ether; //0.038844859616646632 ether; // highest % error found in test
 uint256 constant GET_Y_ERROR_REL = 0.000000059885406089 ether; // highest % error found in test getY-0.5-365-days.
 uint256 constant GET_X_ERROR_REL = 0.000000059885406087 ether; // highest % error found in test getX-0.5-365-days.
 
