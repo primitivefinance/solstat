@@ -37,11 +37,11 @@ This contract implements a number of functions important to the gaussian distrib
 
 The implementation of the CDF aproximation algorithm takes in a random variable $x$ as a single parameter. The function depends on a special helper functions known as the error function `erf`. The error function’s identity is `erfc(-x) = 2 - erfc(x)` and has a small collection of unique properties:
 
-erfc(-$\infty$) = 2
+erfc(-infinity) = 2
 
 erfc(0) = 1
 
-erfc($\infty$) = 0
+erfc(infinity) = 0
 
 The reference implementation for the error function is on p221 of Numerical Recipes in section C 2e. A helpful resource is this [wolfram notebook](https://mathworld.wolfram.com/Erfc.html).
 
@@ -53,11 +53,11 @@ The library also supports an approximation of the Probability Density Function(P
 
 Furthermore we implemented aproximation algorithms for the Percent Point Function(PPF) sometimes known as the inverse CDF or the quantile function. The function is mathmatically defined as $D(x) = \mu - \sigma\sqrt{2}(ierfc(2x))$, has a maximum error of `1.2e-7`, and depends on the inverse error function `ierf` which satisfies `ierfc(erfc(x)) = erfc(ierfc(x))`. The invers error function, defined as `ierfc(1 - x) = ierf(x)`, has a domain of in the interval $0 < x < 2$ and has some unique properties:
 
-ierfc(0) = $\infty$
+ierfc(0) = infinity
 
 ierfc(1) = 0
 
-ierfc(2) = -$\infty$
+ierfc(2) = - infinity
 
 ## `Invariant.sol`
 
