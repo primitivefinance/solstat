@@ -3,8 +3,8 @@ pragma solidity 0.8.13;
 
 import "forge-std/Test.sol";
 
-import {Gaussian} from "src/Gaussian.sol";
-import {Gaussian as Ref} from "src/reference/ReferenceGaussian.sol";
+import {Gaussian} from "../Gaussian.sol";
+import {Gaussian as Ref} from "../reference/ReferenceGaussian.sol";
 
 int256 constant HIGH = int256(10 ether);
 int256 constant LOW = -int256(10 ether);
