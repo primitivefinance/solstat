@@ -2,7 +2,7 @@
 pragma solidity 0.8.13;
 
 import "solmate/utils/FixedPointMathLib.sol";
-import "src/Units.sol";
+import "./Units.sol";
 
 /**
  * @title Gaussian Math Library.

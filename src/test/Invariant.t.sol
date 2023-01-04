@@ -3,10 +3,10 @@ pragma solidity 0.8.13;
 
 import "forge-std/Test.sol";
 
-import "src/Gaussian.sol";
-import {Invariant} from "src/Invariant.sol";
-import {Invariant as Ref} from "src/reference/ReferenceInvariant.sol";
-import {HelperInvariant} from "src/test/HelperInvariant.sol";
+import "../Gaussian.sol";
+import {Invariant} from "../Invariant.sol";
+import {Invariant as Ref} from "./reference/ReferenceInvariant.sol";
+import {HelperInvariant} from "./test/HelperInvariant.sol";
 
 uint256 constant GET_REVERSE_ERROR_REL = 0.000000988606022657 ether; //0.038844859616646632 ether; // highest % error found in test
 uint256 constant GET_Y_ERROR_REL = 0.000000059885406089 ether; // highest % error found in test getY-0.5-365-days.
