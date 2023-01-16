@@ -1,6 +1,6 @@
 # SolStat
 
-SolStat is a Math library written in solidity for statistical function approximations. The library is composed of two core libraries; Gaussian.sol, and Invariant.sol. We will go over each of these libraries and their testing suites. We at Primitive use these libraries to support development with RMM-01s unique trading function, which utilizes the cumulative distribution function (CDF) of the normal distribution denoted by the greek capital letter Phi($\Phi$) in the literature [1,2]. You may recognize the normal or Gaussian distribution as the bell curve. This distribution is significant in modeling real-valued random numbers of unknown distributions. Within the RMM-01 trading function and options pricing, the CDF is used to model random price movement of a Markov process. Since price paths are commonly modeled with markovian proccesses, we believe that the greater community will find value in this library.
+SolStat is a Math library written in solidity for statistical function approximations. The library is composed of two core libraries; Gaussian.sol, and Invariant.sol. We will go over each of these libraries and their testing suites. We at Primitive use these libraries to support development with RMM-01s unique trading function, which utilizes the cumulative distribution function (CDF) of the normal distribution denoted by the greek capital letter Phi ( $\Phi$ ) in the literature [1,2]. You may recognize the normal or Gaussian distribution as the bell curve. This distribution is significant in modeling real-valued random numbers of unknown distributions. Within the RMM-01 trading function and options pricing, the CDF is used to model random price movement of a Markov process. Since price paths are commonly modeled with markovian proccesses, we believe that the greater community will find value in this library.
 
 ## How to use
 
@@ -31,17 +31,23 @@ In classical computing, our computational resources have become [abundant](https
 
 ## `Gaussian.sol`
 
-This contract implements a number of functions important to the gaussian distributions. Importantly all these implementations are only for a mean $\mu = 0$ and variance $\sigma = 1$. These implementations are based on the [Numerical Recipes](https://e-maxx.ru/bookz/files/numerical_recipes.pdf) textbook and its C implementation. [Numerical Recipes](https://e-maxx.ru/bookz/files/numerical_recipes.pdf) cites the original text by Abramowitz and Stegun, "[Handbook of Mathematical Functions](https://personal.math.ubc.ca/~cbm/aands/abramowitz_and_stegun.pdf)," which should be read to understand these unique functions and the implications of their numerical approximations. This implementation was also inspired by the [javascript Gausian library](https://github.com/errcw/gaussian), which implements the same algorithm.
+This contract implements a number of functions important to the Gaussian distributions. Importantly all these implementations are only for a mean $\mu = 0$ and variance $\sigma = 1$. These implementations are based on the [Numerical Recipes](https://e-maxx.ru/bookz/files/numerical_recipes.pdf) textbook and its C implementation. [Numerical Recipes](https://e-maxx.ru/bookz/files/numerical_recipes.pdf) cites the original text by Abramowitz and Stegun, "[Handbook of Mathematical Functions](https://personal.math.ubc.ca/~cbm/aands/abramowitz_and_stegun.pdf)," which should be read to understand these unique functions and the implications of their numerical approximations. This implementation was also inspired by the [javascript Gausian library](https://github.com/errcw/gaussian), which implements the same algorithm.
 
 ### Cumulative Distribution Function
 
-The implementation of the CDF aproximation algorithm takes in a random variable $x$ as a single parameter. The function depends on a special helper functions known as the error function `erf`. The error function’s identity is `erfc(-x) = 2 - erfc(x)` and has a small collection of unique properties:
+The implementation of the CDF aproximation algorithm takes in a random variable $x$ as a single parameter. The function depends on a special helper functions known as the error function `erf`. The error function’s identity is $\operatorname{erfc}(-x) = 2 - \operatorname{erfc}(x)$ and has a small collection of unique properties:
 
-erfc(-infinity) = 2
+$$
+\operatorname{erfc}(-\infty) = 2
+$$
 
-erfc(0) = 1
+$$
+\operatorname{erfc}(0) = 1
+$$
 
-erfc(infinity) = 0
+$$
+\operatorname{erfc}(\infty) = 0
+$$
 
 The reference implementation for the error function is on p221 of Numerical Recipes in section C 2e. A helpful resource is this [wolfram notebook](https://mathworld.wolfram.com/Erfc.html).
 
@@ -51,7 +57,7 @@ The library also supports an approximation of the Probability Density Function(P
 
 ### Percent Point Function / Quantile Function
 
-Furthermore we implemented aproximation algorithms for the Percent Point Function(PPF) sometimes known as the inverse CDF or the quantile function. The function is mathmatically defined as $D(x) = \mu - \sigma\sqrt{2}(ierfc(2x))$, has a maximum error of `1.2e-7`, and depends on the inverse error function `ierf` which satisfies `ierfc(erfc(x)) = erfc(ierfc(x))`. The invers error function, defined as `ierfc(1 - x) = ierf(x)`, has a domain of in the interval $0 < x < 2$ and has some unique properties:
+Furthermore we implemented aproximation algorithms for the Percent Point Function(PPF) sometimes known as the inverse CDF or the quantile function. The function is mathmatically defined as $D(x) = \mu - \sigma\sqrt{2}(ierfc(2x))$, has a maximum error of `1.2e-7`, and depends on the inverse error function `ierf` which satisfies $\operatorname{ierfc}(\operatorname{erfc}(x)) = \operatorname{erfc}(\operatorname{ierfc}(x))`. The inverse error function, defined as $\operatorname{ierfc}(1 - x) = \operatorname{ierf}(x)`, has a domain of in the interval $0 < x < 2$ and has some unique properties:
 
 ierfc(0) = infinity
 
@@ -62,12 +68,18 @@ ierfc(2) = - infinity
 ## `Invariant.sol`
 
 `Invariant.sol` is a contract used to compute the invariant of the RMM-01 trading function such that we compute $y$ in $y = K\Phi(\Phi^{⁻¹}(1-x) - \sigma\sqrt(\tau)) + k$. Notice how we need to compute the normal CDF of a quantity. For a more detailed perspective on the trading function, please see the whitepaper. This is an example of how we have used this library for our research, development, and testing of RMM-01. The function reverts if $x$ is greater than one and simplifies to $K(1+x) + k$ when $\tau$ is zero (at expiry). The function takes in five parameters
+
 `R_x`: The reserves of token $x$ per unit of liquidity, always within the bounds of $[0,1]$.
-`strk`: The strike price of the pool.
-`vol`: the implied volatility of the pool denoted by the lowercase greek letter sigma in finance literature.
-`tau`: The time until the pool expires. Once expired, there can be no swaps.
+
+`strk`: The strike price of the pool also denoted by $K$.
+
+`vol`: the implied volatility of the pool denoted by the lowercase greek letter sigma $\sigma$ in financial literature.
+
+`tau`: The time until the pool expires. Once expired, there can be no swaps. This is the greek letter $\tau$.
+
 `inv`: The current invariant given `R_x`.
-The function then returns the quantity of token y per unit of liquidity denoted `R_y`, which is always within the bounds of $[0, stk]$. This is a clear example of how one would use this library.
+
+The function then returns the quantity of token $y$ per unit of liquidity denoted `R_y`, which is always within the bounds of $[0, K]$. This is a clear example of how one would use this library.
 
 ## Differential Testing with Foundry
 
