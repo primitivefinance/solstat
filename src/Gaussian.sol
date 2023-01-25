@@ -26,6 +26,7 @@ library Gaussian {
 
     error Infinity();
     error NegativeInfinity();
+    error Overflow();
 
     uint256 internal constant HALF_WAD = 0.5 ether;
     uint256 internal constant PI = 3_141592653589793238;
@@ -86,7 +87,14 @@ library Gaussian {
             t := sdiv(SCALAR_SQRD, den)
 
             function muli(pxn, pxd) -> res {
-                res := sdiv(mul(pxn, pxd), ONE)
+                res := mul(pxn, pxd)
+
+                if iszero(eq(sdiv(res, pxn), pxd)) {
+                    mstore(0, 0x35278d12)
+                    revert(0, 4)
+                }
+
+                res := sdiv(res, ONE)
             }
 
             {
