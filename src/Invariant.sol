@@ -73,7 +73,7 @@ library Invariant {
      * Reverts if `R_x` is greater than one. Units are a fixed point number with 18 decimals.
      *
      * We handle some special cases, try this:
-     * `normalcdlower(normalicdlower(1) - 0.1)` in https://keisan.casio.com/calculator
+     * `normalcd(normalicd(1) - 0.1)` in https://keisan.casio.com/calculator
      * Gaussian.sol reverts for `ppf(1)` and `ppf(0)`, so we handle those cases.
      *
      * @param R_x Quantity of token reserve `x` within the bounds of [0, 1].
@@ -94,8 +94,8 @@ library Invariant {
         int256 inv
     ) internal pure returns (uint256 R_y) {
         if (R_x > WAD) revert OOB(); // Negative input for `ppf` is invalid.
-        if (R_x == WAD) return uint256(int256(stk) + inv); // For `ppf(0)` case, because 1 - R_x == 0, and `y = K * 1 + k` simplifies to `y = K + k`
-        if (R_x == 0) return uint256(inv); // For `ppf(1)` case, because 1 - 0 == 1, and `y = K * 0 + k` simplifies to `y = k`.
+        if (R_x == WAD) return uint256(inv); // For `ppf(0)` case, because 1 - 1 == 0, cdf(ppf(0)) == 0, and `y = K * 0 + k` simplifies to `y = k`.
+        if (R_x == 0) return uint256(int256(stk) + inv); // For `ppf(1)` case, because 1 - 0 == 1, cdf(ppf(1)) == 1, and `y = K * 1 + k` simplifies to `y = K + k`.
         if (tau != 0) {
             // Short circuits because tau != 0 is more likely.
             uint256 sec;

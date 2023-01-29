@@ -521,4 +521,26 @@ contract TestInvariant is Test {
         }
         emit log_int(k);
     }
+
+    function test_getY_upper_bound_returns_zero() public {
+        HelperInvariant.Args memory args = HelperInvariant.Args({
+            x: Invariant.WAD,
+            K: 10e18,
+            o: 1e4,
+            t: 365 days
+        });
+        uint256 actual = Invariant.getY(args.x, args.K, args.o, args.t, 0);
+        assertEq(actual, 0, "not-zero");
+    }
+
+    function test_getY_lower_bound_returns_strike() public {
+        HelperInvariant.Args memory args = HelperInvariant.Args({
+            x: 0,
+            K: 10e18,
+            o: 1e4,
+            t: 365 days
+        });
+        uint256 actual = Invariant.getY(args.x, args.K, args.o, args.t, 0);
+        assertEq(actual, args.K, "not-strike");
+    }
 }

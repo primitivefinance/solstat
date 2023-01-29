@@ -1,3 +1,7 @@
+# Beta
+
+> This library is in beta. It's not ready for production.
+
 # SolStat
 
 SolStat is a Math library written in solidity for statistical function approximations. The library is composed of two core libraries; Gaussian.sol, and Invariant.sol. We will go over each of these libraries and their testing suites. We at Primitive use these libraries to support development with RMM-01s unique trading function, which utilizes the cumulative distribution function (CDF) of the normal distribution denoted by the greek capital letter Phi($\Phi$) in the literature [1,2]. You may recognize the normal or Gaussian distribution as the bell curve. This distribution is significant in modeling real-valued random numbers of unknown distributions. Within the RMM-01 trading function and options pricing, the CDF is used to model random price movement of a Markov process. Since price paths are commonly modeled with markovian proccesses, we believe that the greater community will find value in this library.
@@ -63,7 +67,7 @@ ierfc(2) = - infinity
 
 `Invariant.sol` is a contract used to compute the invariant of the RMM-01 trading function such that we compute $y$ in $y = K\Phi(\Phi^{⁻¹}(1-x) - \sigma\sqrt(\tau)) + k$. Notice how we need to compute the normal CDF of a quantity. For a more detailed perspective on the trading function, please see the whitepaper. This is an example of how we have used this library for our research, development, and testing of RMM-01. The function reverts if $x$ is greater than one and simplifies to $K(1+x) + k$ when $\tau$ is zero (at expiry). The function takes in five parameters
 `R_x`: The reserves of token $x$ per unit of liquidity, always within the bounds of $[0,1]$.
-`strk`: The strike price of the pool.
+`stk`: The strike price of the pool.
 `vol`: the implied volatility of the pool denoted by the lowercase greek letter sigma in finance literature.
 `tau`: The time until the pool expires. Once expired, there can be no swaps.
 `inv`: The current invariant given `R_x`.
