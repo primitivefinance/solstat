@@ -26,8 +26,8 @@ library Invariant {
         int256 inv
     ) internal pure returns (uint256 R_y) {
         if (R_x > WAD) revert OOB(); // Negative input for `ppf` is invalid.
-        if (R_x == WAD) return uint256(int256(stk) + inv); // For `ppf(0)` case, because 1 - R_x == 0, and `y = K * 1 + k` simplifies to `y = K + k`
-        if (R_x == 0) return uint256(inv); // For `ppf(1)` case, because 1 - 0 == 1, and `y = K * 0 + k` simplifies to `y = k`.
+        if (R_x == WAD) return uint256(inv); // For `ppf(0)` case, because 1 - 1 == 0, cdf(ppf(0)) == 0, and `y = K * 0 + k` simplifies to `y = k`.
+        if (R_x == 0) return uint256(int256(stk) + inv); // For `ppf(1)` case, because 1 - 0 == 1, cdf(ppf(1)) == 1, and `y = K * 1 + k` simplifies to `y = K + k`.
         if (tau != 0) {
             // short circuit
             uint256 sec = tau.divWadDown(uint256(YEAR));
