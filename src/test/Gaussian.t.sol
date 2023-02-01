@@ -228,16 +228,14 @@ contract TestGaussian is Test {
     }
 
     function testFuzz_ERFC_Bounds_positive(int256 x) public {
-        vm.assume(x > 1 ether);
-        vm.assume(x < 10000000000 ether);
+        vm.assume(x >= 0 && x < 1999999999999999998000000000000000002);
         int256 y = Gaussian.erfc(x);
         assertLe(y, 2 ether);
         assertGe(y, 0);
     }
 
     function testFuzz_ERFC_Bounds_negative(int256 x) public {
-        vm.assume(x < -1 ether);
-        vm.assume(x > -10000000000 ether);
+        vm.assume(x <= 0 && x > -1999999999999999998000000000000000002);
         int256 y = Gaussian.erfc(x);
         assertLe(y, 2 ether);
         assertGe(y, 0);
