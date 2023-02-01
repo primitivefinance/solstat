@@ -8,9 +8,9 @@ import {Invariant} from "../Invariant.sol";
 import {Invariant as Ref} from "../reference/ReferenceInvariant.sol";
 import {HelperInvariant} from "./HelperInvariant.sol";
 
-uint256 constant GET_REVERSE_ERROR_REL = 0.000000988606022657 ether; //0.038844859616646632 ether; // highest % error found in test
-uint256 constant GET_Y_ERROR_REL = 0.000000059885406089 ether; // highest % error found in test getY-0.5-365-days.
-uint256 constant GET_X_ERROR_REL = 0.000000059885406087 ether; // highest % error found in test getX-0.5-365-days.
+uint256 constant GET_REVERSE_ERROR_REL = 0; //0.000000988606022657 ether; //0.038844859616646632 ether; // highest % error found in test
+uint256 constant GET_Y_ERROR_REL = 0; //0.000000059885406089 ether; // highest % error found in test getY-0.5-365-days.
+uint256 constant GET_X_ERROR_REL = 0; //0.000000059885406087 ether; // highest % error found in test getX-0.5-365-days.
 
 /// @dev for making test cases with different days, compute years in wad, then pass into calculator.
 function debugDays(uint256 amountTime) pure returns (uint256 yearsWad) {
@@ -44,9 +44,9 @@ contract TestInvariant is Test {
         uint256 R_x = 0.460185342615210335 ether;
         uint256 stk = 10 ether;
         uint256 vol = 0.1 ether;
-        uint256 tau = 365 days;
+        uint256 tau = 365 days; // 0.999336057550805286 years
         int256 inv = 0;
-        uint256 R_y = Ref.getY({
+        uint256 R_y = Invariant.getY({
             R_x: R_x,
             stk: stk,
             vol: vol,
@@ -54,7 +54,7 @@ contract TestInvariant is Test {
             inv: inv
         });
 
-        uint256 expected = Ref.getX({
+        uint256 expected = Invariant.getX({
             R_y: R_y,
             stk: stk,
             vol: vol,

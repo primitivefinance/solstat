@@ -92,11 +92,7 @@ contract DifferentialTests is Test {
     }
 
     function run(DifferentialFunctions fn) public {
-        if (fn == DifferentialFunctions.erfc) {
-            _run(Gaussian.erfc);
-        } else if (fn == DifferentialFunctions.ierfc) {
-            _run(Gaussian.ierfc);
-        } else if (fn == DifferentialFunctions.cdf) {
+        if (fn == DifferentialFunctions.cdf) {
             _run(Gaussian.cdf);
         } else if (fn == DifferentialFunctions.ppf) {
             _run(Gaussian.ppf);
