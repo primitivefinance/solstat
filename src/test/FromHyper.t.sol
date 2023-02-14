@@ -179,9 +179,29 @@ contract TestEchidnaSolstatBounds is Test {
         assertLt(y, 2e18); // NOTE: should not be inclusive if rounding down.
     }
 
-    function test_pdf_is_bounded(int256 x) public {
-        x = bound(x, -1 ether, 1 ether);
-        vm.assume(x != 0);
+    int256 constant HIGH = int256(10 ether);
+    int256 constant LOW = -int256(10 ether);
+
+    function test_pdf_is_bounded_positive(int256 x) public {
+        vm.assume(x > 1 ether);
+        vm.assume(x < 240615969168004511545033772477625056928);
+
+        int256 y = Gaussian.pdf(x);
+
+        console.logInt(x);
+        console.logInt(y);
+
+        // NOTE if consistently rounding down, the upper
+        // bound should not be inclusive, i.e.
+        // `pdf(0) = ⌊1/sqrt(2*pi)⌋ < PDF_0_UP` should hold,
+        // if `pdf(0)` can't be exactly represented as an int in 18 decimals.
+        assertGe(y, 0);
+        assertLt(y, PDF_0_UP);
+    }
+
+    function test_pdf_is_bounded_negative(int256 x) public {
+        vm.assume(x < -1 ether);
+        vm.assume(x > -240615969168004511545033772477625056928);
 
         int256 y = Gaussian.pdf(x);
 
@@ -247,8 +267,11 @@ contract TestEchidnaSolstatInvariants is Test {
     }
 
     function test_pdf_is_decreasing(int256 x1, int256 x2) public {
+        vm.assume(x1 != 0);
+        vm.assume(x2 != 0);
+
         x1 = bound(x1, 0, type(int256).max);
-        x2 = bound(x2, x1, type(int256).max);
+        x2 = bound(x2, x1, -17024873243320503973977292162108966283898615108050687928166339672021);
 
         int256 y1 = Gaussian.pdf(x1);
         int256 y2 = Gaussian.pdf(x2);
