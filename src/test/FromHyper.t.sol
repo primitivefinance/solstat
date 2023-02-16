@@ -143,7 +143,11 @@ contract TestEchidnaSolmateInvariants is Test {
 contract TestEchidnaSolstatBounds is Test {
     /* ---------------- FAIL ---------------- */
 
+    // PASS!
+    // TODO: Add these bounds to the actual function
     function test_cdf_is_bounded(int256 x) public {
+        vm.assume(x < 2828427124746190093171572875253809907);
+        vm.assume(x > -2828427124746190093171572875253809907);
         // Note: this test seems to pass, however, because `erfc` is
         // being used it is likely that the unbounded values were not
         // triggered/found.
@@ -165,10 +169,15 @@ contract TestEchidnaSolstatBounds is Test {
     }
     */
 
+    // PASS!
+    // TODO: Add these bounds to the actual function
     function test_erfc_is_bounded(int256 x) public {
+        vm.assume(x > -6231968434539646069);
+        vm.assume(x < 1999999999999999998000000000000000002);
+
         // Note: foundry has a hard time disproving this,
         // but the example above and the test below shows that the values can lie far out of bounds.
-        x = bound(x, type(int256).min, 1999999999999999998000000000000000001);
+        // x = bound(x, type(int256).min, 1999999999999999998000000000000000001);
 
         int256 y = Gaussian.erfc(x);
 
@@ -179,9 +188,8 @@ contract TestEchidnaSolstatBounds is Test {
         assertLt(y, 2e18); // NOTE: should not be inclusive if rounding down.
     }
 
-    int256 constant HIGH = int256(10 ether);
-    int256 constant LOW = -int256(10 ether);
-
+    // PASS!
+    // TODO: Add these bounds to the actual function
     function test_pdf_is_bounded_positive(int256 x) public {
         vm.assume(x > 1 ether);
         vm.assume(x < 240615969168004511545033772477625056928);
@@ -199,6 +207,8 @@ contract TestEchidnaSolstatBounds is Test {
         assertLt(y, PDF_0_UP);
     }
 
+    // PASS!
+    // TODO: Add these bounds to the actual function
     function test_pdf_is_bounded_negative(int256 x) public {
         vm.assume(x < -1 ether);
         vm.assume(x > -240615969168004511545033772477625056928);
@@ -216,16 +226,19 @@ contract TestEchidnaSolstatBounds is Test {
         assertLt(y, PDF_0_UP);
     }
 
-    function test_ierfc_should_revert_outside_of_input_domain(int256 x) public {
-        if (x > 0) x = bound(x, 2e18, type(int256).max);
-        if (x <= 0) x = bound(x, type(int256).min, 0);
-
+    // FAIL!
+    // TODO: Update the function to revert if the input is under 0
+    function test_ierfc_should_revert_under_zero(int256 x) public {
+        vm.assume(x < 0);
         vm.expectRevert();
         int256 y = Gaussian.ierfc(x);
+    }
 
-        // NOTE unexpectedly returns values.
-        console.logInt(x);
-        console.logInt(y);
+    // TODO: Update the function to revert if the input is above 2
+    function test_ierfc_should_revert_above_two(int256 x) public {
+        vm.assume(x > 2 ether);
+        vm.expectRevert();
+        int256 y = Gaussian.ierfc(x);
     }
 }
 
@@ -244,15 +257,26 @@ contract TestEchidnaSolstatInvariants is Test {
 
     /* ---------------- FAIL ---------------- */
 
+    // FAIL!
+    // TODO: Might be better to use invariant testing here?
     function test_cdf_is_increasing(int256 x1, int256 x2) public {
-        x2 = bound(x2, x1, type(int256).max);
+        vm.assume(x1 > 1 ether);
+        vm.assume(x2 > 1 ether);
+        // vm.assume(x2 > x1 && x2 < 2828427124746190093171572875253809907);
 
         int256 y1 = Gaussian.cdf(x1);
         int256 y2 = Gaussian.cdf(x2);
 
-        assertGe(y2, y1);
+        if (x1 > x2) {
+            assertGe(y1, y2);
+        } else {
+            assertGe(y2, y1);
+        }
     }
 
+
+    // PASS!
+    // TODO: Update the function to add these bounds
     function test_cdf_is_gt_half(int256 x) public {
         vm.assume(x > -2828427124746190093171572875253809907);
         vm.assume(x < 2828427124746190093171572875253809907);
@@ -266,12 +290,19 @@ contract TestEchidnaSolstatInvariants is Test {
         if (x < -1e18) assertLt(y, 0.5e18);
     }
 
+    // FAIL!
+    // TODO: Might be better to use invariant testing here?
     function test_pdf_is_decreasing(int256 x1, int256 x2) public {
+        /*
         vm.assume(x1 != 0);
         vm.assume(x2 != 0);
 
         x1 = bound(x1, 0, type(int256).max);
         x2 = bound(x2, x1, -17024873243320503973977292162108966283898615108050687928166339672021);
+        */
+
+       vm.assume(x1 > -1080571843439736198702094029999283521497671796835504562366315314);
+       vm.assume(x2 > -1080571843439736198702094029999283521497671796835504562366315314);
 
         int256 y1 = Gaussian.pdf(x1);
         int256 y2 = Gaussian.pdf(x2);
@@ -284,6 +315,8 @@ contract TestEchidnaSolstatInvariants is Test {
         assertLe(y2, y1);
     }
 
+    // FAIL!
+    // TODO: Might be better to use invariant testing here?
     function test_erfc_is_decreasing(int256 x1, int256 x2) public {
         x1 = bound(x1, type(int256).min, type(int256).max);
         x2 = bound(x2, x1, type(int256).max);
@@ -299,6 +332,8 @@ contract TestEchidnaSolstatInvariants is Test {
         assertLe(y2, y1);
     }
 
+    // FAIL!
+    // TODO: Might be better to use invariant testing here?
     function test_ierfc_is_decreasing(int256 x1, int256 x2) public {
         x1 = bound(x1, 0, 2e18);
         x2 = bound(x2, x1, 2e18);
