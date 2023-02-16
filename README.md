@@ -1,3 +1,7 @@
+# Beta
+
+> This library is in beta. It's not ready for production.
+
 # SolStat
 
 SolStat is a Math library written in solidity for statistical function approximations. The library is composed of two core libraries; Gaussian.sol, and Invariant.sol. We will go over each of these libraries and their testing suites. We at Primitive use these libraries to support development with RMM-01s unique trading function, which utilizes the cumulative distribution function (CDF) of the normal distribution denoted by the greek capital letter Phi ( $\Phi$ ) in the literature [1,2]. You may recognize the normal or Gaussian distribution as the bell curve. This distribution is significant in modeling real-valued random numbers of unknown distributions. Within the RMM-01 trading function and options pricing, the CDF is used to model random price movement of a Markov process. Since price paths are commonly modeled with markovian proccesses, we believe that the greater community will find value in this library.

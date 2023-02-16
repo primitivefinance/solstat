@@ -9,3 +9,4 @@ remappings = [
 
 [fuzz]
 runs = 10000
+max_test_rejects = 400000
