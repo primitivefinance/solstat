@@ -77,6 +77,10 @@ library Gaussian {
      * @custom:source https://mathworld.wolfram.com/Erfc.html.
      */
     function erfc(int256 input) internal pure returns (int256 output) {
+        if (input == 0) {
+            return 1 ether;
+        }
+
         uint256 z = abs(input);
         int256 t;
         int256 step;
