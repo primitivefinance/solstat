@@ -27,6 +27,7 @@ library Gaussian {
     error Infinity();
     error NegativeInfinity();
     error Overflow();
+    error OutOfBounds();
 
     uint256 internal constant HALF_WAD = 0.5 ether;
     uint256 internal constant PI = 3_141592653589793238;
@@ -175,6 +176,8 @@ library Gaussian {
      * @custom:source https://mathworld.wolfram.com/InverseErfc.html.
      */
     function ierfc(int256 x) internal pure returns (int256 z) {
+        if (x < 0 || x > 2 ether) revert OutOfBounds();
+
         assembly {
             // x >= 2, iszero(x < 2 ? 1 : 0) ? 1 : 0.
             if iszero(slt(x, TWO)) {
