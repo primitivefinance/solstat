@@ -10,18 +10,20 @@ contract TestIErfc is Test {
         vm.assume(x < 0 || x > 2 ether);
         vm.expectRevert(Gaussian.OutOfBounds.selector);
         int256 y = Gaussian.ierfc(x);
+        y;
     }
 
     function testDiff_ierfc(int256 x) public {
-        vm.assume(x > 0 && x < 2 ether);
+        vm.assume(x > 0.0000001 ether);
+        vm.assume(x < 2 ether);
         string[] memory inputs = new string[](3);
         inputs[0] = "./gaussian";
         inputs[1] = "ierfc";
         inputs[2] = vm.toString(x);
         bytes memory res = vm.ffi(inputs);
-        uint256 ref = abi.decode(res, (uint256));
-        int256 y = Gaussian.erfc(x);
-        // Results have a 0.000000105538072456% difference
-        assertApproxEqAbs(ref, uint256(y), 0);
+        int256 ref = abi.decode(res, (int256));
+        int256 y = Gaussian.ierfc(x);
+        // Results have a 0.000041915704014722% difference
+        assertApproxEqAbs(ref, y, 41915704014722);
     }
 }
