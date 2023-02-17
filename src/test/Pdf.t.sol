@@ -7,7 +7,6 @@ import {Gaussian} from "../Gaussian.sol";
 
 contract TestPdf is Test {
     function testDiff_pdf(int256 x) public {
-        // vm.assume(x > 0.0000001 ether);
         vm.assume(x > -2828427124746190093171572875253809907);
         vm.assume(x < 2828427124746190093171572875253809907);
         string[] memory inputs = new string[](3);
