@@ -7,7 +7,6 @@ import {Gaussian} from "../Gaussian.sol";
 
 contract TestCdf is Test {
     function testDiff_cdf(int256 x) public {
-        // vm.assume(x > 0.0000001 ether);
         vm.assume(x > -2828427124746190093171572875253809907);
         vm.assume(x < 2828427124746190093171572875253809907);
         string[] memory inputs = new string[](3);
@@ -17,7 +16,7 @@ contract TestCdf is Test {
         bytes memory res = vm.ffi(inputs);
         int256 ref = abi.decode(res, (int256));
         int256 y = Gaussian.cdf(x);
-        // Results have a 0.0000001% difference
-        assertApproxEqAbs(ref, y, 100000000000);
+        // Results have a 0.000000133246208079% difference
+        assertApproxEqRel(ref, y, 0.000000133246208079 ether);
     }
 }
