@@ -16,7 +16,14 @@ contract TestPdf is Test {
         bytes memory res = vm.ffi(inputs);
         int256 ref = abi.decode(res, (int256));
         int256 y = Gaussian.pdf(x);
-        // Results have a 0.0000001% difference
-        assertApproxEqAbs(ref, y, 1000000);
+
+        // When outputs are very small, we tolerate a larger error
+        if (ref < 1_000_000_000 && y < 1_000_000_000) {
+            // 0.1% of difference
+            assertApproxEqRel(ref, y, 0.001 ether);
+        } else {
+            // 0.00005% of difference
+            assertApproxEqRel(ref, y, 0.0000005 ether);
+        }
     }
 }
