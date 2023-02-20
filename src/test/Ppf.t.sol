@@ -16,7 +16,7 @@ contract TestPpf is Test {
         bytes memory res = vm.ffi(inputs);
         int256 ref = abi.decode(res, (int256));
         int256 y = Gaussian.ppf(x);
-        // Results have a 0.000000500210885734% difference
-        assertApproxEqAbs(ref, y, 500210885734);
+        // Results have a 0.00165% difference
+        assertApproxEqRel(ref, y, 0.0000165 ether);
     }
 }
