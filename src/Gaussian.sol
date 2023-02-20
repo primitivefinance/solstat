@@ -178,6 +178,8 @@ library Gaussian {
     function ierfc(int256 x) internal pure returns (int256 z) {
         if (x < 0 || x > 2 ether) revert OutOfBounds();
 
+        if (x == SCALAR) return 0;
+
         assembly {
             // x >= 2, iszero(x < 2 ? 1 : 0) ? 1 : 0.
             if iszero(slt(x, TWO)) {
