@@ -176,6 +176,7 @@ library Gaussian {
      * @custom:source https://mathworld.wolfram.com/InverseErfc.html.
      */
     function ierfc(int256 x) internal pure returns (int256 z) {
+        if (x == 0 || x == 2 ether) revert Infinity();
         if (x < 0 || x > 2 ether) revert OutOfBounds();
 
         if (x == SCALAR) return 0;
