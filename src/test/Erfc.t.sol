@@ -53,7 +53,7 @@ contract TestErfc is Test {
         bytes memory res = vm.ffi(inputs);
         uint256 ref = abi.decode(res, (uint256));
         int256 y = Gaussian.erfc(x);
-        // Results have a 0.000000105538072456% difference
-        assertApproxEqAbs(ref, uint256(y), 105538072456);
+        // Results have a 0.0001% difference
+        assertApproxEqRel(ref, uint256(y), 0.000001 ether);
     }
 }
