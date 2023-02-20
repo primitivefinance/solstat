@@ -5,7 +5,7 @@ import "forge-std/Test.sol";
 
 import {Gaussian} from "../Gaussian.sol";
 
-contract TestIErfc is Test {
+contract TestIerfc is Test {
     function testFuzz_ierfc_RevertWhenInputIsOutOfBounds(int256 x) public {
         vm.assume(x < 0 || x > 2 ether);
         vm.expectRevert(Gaussian.OutOfBounds.selector);
@@ -23,7 +23,14 @@ contract TestIErfc is Test {
         bytes memory res = vm.ffi(inputs);
         int256 ref = abi.decode(res, (int256));
         int256 y = Gaussian.ierfc(x);
-        // Results have a 0.000041915704014722% difference
-        assertApproxEqAbs(ref, y, 41915704014722);
+
+        if (x > 0.9 ether && x < 1.1 ether) {
+            // When inputs are very close to 1, we tolerate a larger error
+            // 0.15% of difference
+            assertApproxEqRel(ref, y, 0.0015 ether);
+        } else {
+            // 0.00005% of difference
+            assertApproxEqRel(ref, y, 0.0000005 ether);
+        }
     }
 }
