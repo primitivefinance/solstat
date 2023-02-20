@@ -217,7 +217,14 @@ library Gaussian {
         int256 r;
         assembly {
             function muli(pxn, pxd) -> res {
-                res := sdiv(mul(pxn, pxd), ONE)
+                res := mul(pxn, pxd)
+
+                if iszero(eq(sdiv(res, pxn), pxd)) {
+                    mstore(0, 0x35278d1200000000000000000000000000000000000000000000000000000000)
+                    revert(0, 4)
+                }
+
+                res := sdiv(res, ONE)
             }
 
             r := muli(
@@ -285,12 +292,14 @@ library Gaussian {
      */
     function cdf(int256 x) internal pure returns (int256 z) {
         int256 negated;
+
         assembly {
             let res := sdiv(mul(x, ONE), SQRT2)
             negated := add(not(res), 1)
         }
 
         int256 _erfc = erfc(negated);
+
         assembly {
             z := sdiv(mul(ONE, _erfc), TWO)
         }
@@ -307,9 +316,11 @@ library Gaussian {
      */
     function pdf(int256 x) internal pure returns (int256 z) {
         int256 e;
+
         assembly {
             e := sdiv(mul(add(not(x), 1), x), TWO) // (-x * x) / 2.
         }
+
         e = FixedPointMathLib.expWad(e);
 
         assembly {
