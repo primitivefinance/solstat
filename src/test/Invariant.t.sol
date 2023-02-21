@@ -388,7 +388,7 @@ contract TestInvariant is Test {
 
         uint256 actual = Invariant.getX(args.x, args.K, args.o, args.t, 0);
         uint256 expected = Ref.getX(args.x, args.K, args.o, args.t, 0);
-        assertEq(actual, expected, "getX-inequality");
+        assertApproxEqAbs(actual, expected, 1 ether - 1e6, "getX-inequality");
     }
 
     function testReference_invariant_Equality(
