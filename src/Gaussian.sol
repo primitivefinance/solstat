@@ -27,6 +27,7 @@ library Gaussian {
     error Infinity();
     error NegativeInfinity();
     error Overflow();
+    error OutOfBounds();
 
     uint256 internal constant HALF_WAD = 0.5 ether;
     uint256 internal constant PI = 3_141592653589793238;
@@ -77,6 +78,10 @@ library Gaussian {
      * @custom:source https://mathworld.wolfram.com/Erfc.html.
      */
     function erfc(int256 input) internal pure returns (int256 output) {
+        if (input == 0) {
+            return 1 ether;
+        }
+
         uint256 z = abs(input);
         int256 t;
         int256 step;
@@ -171,6 +176,11 @@ library Gaussian {
      * @custom:source https://mathworld.wolfram.com/InverseErfc.html.
      */
     function ierfc(int256 x) internal pure returns (int256 z) {
+        if (x == 0 || x == 2 ether) revert Infinity();
+        if (x < 0 || x > 2 ether) revert OutOfBounds();
+
+        if (x == SCALAR) return 0;
+
         assembly {
             // x >= 2, iszero(x < 2 ? 1 : 0) ? 1 : 0.
             if iszero(slt(x, TWO)) {
@@ -207,7 +217,14 @@ library Gaussian {
         int256 r;
         assembly {
             function muli(pxn, pxd) -> res {
-                res := sdiv(mul(pxn, pxd), ONE)
+                res := mul(pxn, pxd)
+
+                if iszero(eq(sdiv(res, pxn), pxd)) {
+                    mstore(0, 0x35278d1200000000000000000000000000000000000000000000000000000000)
+                    revert(0, 4)
+                }
+
+                res := sdiv(res, ONE)
             }
 
             r := muli(
@@ -275,12 +292,14 @@ library Gaussian {
      */
     function cdf(int256 x) internal pure returns (int256 z) {
         int256 negated;
+
         assembly {
             let res := sdiv(mul(x, ONE), SQRT2)
             negated := add(not(res), 1)
         }
 
         int256 _erfc = erfc(negated);
+
         assembly {
             z := sdiv(mul(ONE, _erfc), TWO)
         }
@@ -297,9 +316,11 @@ library Gaussian {
      */
     function pdf(int256 x) internal pure returns (int256 z) {
         int256 e;
+
         assembly {
             e := sdiv(mul(add(not(x), 1), x), TWO) // (-x * x) / 2.
         }
+
         e = FixedPointMathLib.expWad(e);
 
         assembly {
