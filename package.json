@@ -1,7 +1,7 @@
 {
   "name": "solstat",
   "license": "AGPL-3.0-only",
-  "version": "0.0.2-beta",
+  "version": "1.0.0-beta",
   "description": "Solidity library for statistical function approximations.",
   "files": [
     "src/**/*.sol"
