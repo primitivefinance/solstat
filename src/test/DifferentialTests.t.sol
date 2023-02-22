@@ -15,7 +15,7 @@ contract DifferentialTests is Test {
     }
 
     string internal constant DATA_DIR = "test/differential/data/";
-    uint256 internal constant EPSILON = 1e5;
+    uint256 internal constant EPSILON = 1e3;
 
     uint256 _epsilon;
     int256[129] _inputs;
@@ -62,7 +62,7 @@ contract DifferentialTests is Test {
     }
 
     function testDifferentialERFC() public {
-        _epsilon = 1e6;
+        _epsilon = EPSILON;
         load("erfc");
         run(DifferentialFunctions.erfc);
     }
@@ -74,19 +74,19 @@ contract DifferentialTests is Test {
     }
 
     function testDifferentialCDF() public {
-        _epsilon = 1e11;
+        _epsilon = EPSILON;
         load("cdf");
         run(DifferentialFunctions.cdf);
     }
 
     function testDifferentialPPF() public {
-        _epsilon = 1e12;
+        _epsilon = EPSILON * 10;
         load("ppf");
         run(DifferentialFunctions.ppf);
     }
 
     function testDifferentialInvariant() public {
-        _epsilon = 1e12;
+        _epsilon = 1e9; // todo: fix/investigate
         load("invariant");
         run(DifferentialFunctions.invariant);
     }
@@ -131,7 +131,7 @@ contract DifferentialTests is Test {
                 computed,
                 output,
                 _epsilon,
-                "computed-output-mismatch"
+                vm.toString(input)
             );
         }
     }

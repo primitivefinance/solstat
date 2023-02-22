@@ -332,7 +332,14 @@ library Gaussian {
      * @dev Equal to `D(x)^(-1) = µ - σ√2(ierfc(2x))`.
      * Only computes ppf of a distribution with µ = 0 and σ = 1.
      *
-     * @custom:error Maximum error of 1.2e-7.
+     * @custom:error Maximum error of 1.2e-7 compared to "real" ierfc.
+     * @custom:error Maximum error of 1e-14 in differential tests vs. javscript implementation.
+     * This error is for inputs near the upper bound >= 0.99 wad.
+     * JS uses 64bit floats naturally. 12 bits are assigned to the sign and exponent. 
+     * This leaves 52bit to represent the decimal. 
+     * Taking log_10(2^52) gives roughly 15.65. 
+     * This means that we can really only get 15 digits of accuracy from JS itself.
+     * The error is in this conversion from fixed point to floating point.
      * @custom:source https://mathworld.wolfram.com/NormalDistribution.html.
      */
     function ppf(int256 x) internal pure returns (int256 z) {
