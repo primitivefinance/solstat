@@ -7,6 +7,9 @@ remappings = [
     'solmate/=lib/solmate/src/'
 ]
 
+[profile.test]
+via_ir = false
+
 [fuzz]
 runs = 100000
 max_test_rejects = 4000000
