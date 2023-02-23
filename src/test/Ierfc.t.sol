@@ -25,8 +25,8 @@ contract TestIerfc is Test {
         y;
     }
 
-    function test_ierfc_TwoTriggersInfinity() public {
-        vm.expectRevert(Gaussian.Infinity.selector);
+    function test_ierfc_TwoTriggersNegativeInfinity() public {
+        vm.expectRevert(Gaussian.NegativeInfinity.selector);
         int256 y = Gaussian.ierfc(2 ether);
         y;
     }
