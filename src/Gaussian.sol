@@ -29,7 +29,6 @@ library Gaussian {
 
     error Infinity();
     error NegativeInfinity();
-    error Overflow();
     error OutOfBounds();
 
     uint256 internal constant WAD = 1 ether;
@@ -138,7 +137,8 @@ library Gaussian {
      */
     function ierfc(int256 x) internal pure returns (int256 z) {
         if (x < 0 || x > 2 ether) revert OutOfBounds();
-        if (x == 0 || x == 2 ether) revert Infinity();
+        if (x == 0) revert Infinity();
+        if (x == 2 ether) revert NegativeInfinity();
         if (z != 0) return z;
 
         int256 xx = (x < ONE) ? x : TWO - x;
@@ -175,6 +175,7 @@ library Gaussian {
      * @dev Equal to `D(x) = 0.5[ 1 + erf((x - µ) / σ√2)]`.
      * Only computes cdf of a distribution with µ = 0 and σ = 1.
      *
+     * @custom:rounding Rounds down via truncation from division.
      * @custom:error Maximum error of 1.2e-7 compared to theoretical cdf.
      * @custom:error Maximum error of 1e-15 compared to Gaussian.js library.
      * @custom:source https://mathworld.wolfram.com/NormalDistribution.html.
@@ -192,6 +193,7 @@ library Gaussian {
      * @dev Equal to `Z(x) = (1 / σ√2π)e^( (-(x - µ)^2) / 2σ^2 )`.
      * Only computes pdf of a distribution with µ = 0 and σ = 1.
      *
+     * @custom:rounding Rounds down via truncation from division.
      * @custom:error Maximum error of 1.2e-7 compared to theoretical pdf.
      * @custom:error Maximum error of 1e-15 compared to Gaussian.js library.
      * @custom:source https://mathworld.wolfram.com/ProbabilityDensityFunction.html.
