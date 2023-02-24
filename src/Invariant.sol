@@ -50,11 +50,10 @@ import "./Gaussian.sol";
  * // ------------------------ ~ ------------------------ //
  */
 library Invariant {
-    using Gaussian for int256; // Uses the `cdf` and `pdf` functions.
-    using FixedPointMathLib for uint256; // Uses the `sqrt` function.
+    using Gaussian for int256;
+    using FixedPointMathLib for uint256;
 
     uint256 internal constant WAD = 1 ether;
-    uint256 internal constant DOUBLE_WAD = 2 ether;
     int256 internal constant ONE = 1 ether;
     int256 internal constant YEAR = 31556952;
     int256 internal constant HALF_SCALAR = 1e9;
@@ -86,48 +85,26 @@ library Invariant {
      * @custom:error Technically, none. This is the source of truth for the trading function.
      * @custom:source https://primitive.xyz/whitepaper
      */
-    function getY(
-        uint256 R_x,
-        uint256 stk,
-        uint256 vol,
-        uint256 tau,
-        int256 inv
-    ) internal pure returns (uint256 R_y) {
+    function getY(uint256 R_x, uint256 stk, uint256 vol, uint256 tau, int256 inv) internal pure returns (uint256 R_y) {
         if (R_x > WAD) revert OOB(); // Negative input for `ppf` is invalid.
         if (R_x == WAD) return uint256(inv); // For `ppf(0)` case, because 1 - 1 == 0, cdf(ppf(0)) == 0, and `y = K * 0 + k` simplifies to `y = k`.
         if (R_x == 0) return uint256(int256(stk) + inv); // For `ppf(1)` case, because 1 - 0 == 1, cdf(ppf(1)) == 1, and `y = K * 1 + k` simplifies to `y = K + k`.
         if (tau != 0) {
-            // Short circuits because tau != 0 is more likely.
-            uint256 sec;
-            assembly {
-                sec := sdiv(mul(tau, ONE), YEAR) // Unit math: YEAR * SCALAR / YEAR = SCALAR.
-            }
+            // short circuit
+            uint256 sec = tau.divWadDown(uint256(YEAR));
+            uint256 sdr = sec.sqrt();
+            sdr = sdr * uint256(HALF_SCALAR);
+            sdr = vol.mulWadDown(sdr);
 
-            uint256 sdr = sec.sqrt(); // √τ.
-            assembly {
-                sdr := mul(sdr, HALF_SCALAR) // Unit math: sdr * HALF_SCALAR = SCALAR.
-                sdr := sdiv(mul(vol, sdr), ONE) // σ√τ.
-            }
+            int256 phi = ONE - int256(R_x);
+            phi = phi.ppf();
 
-            int256 phi;
-            assembly {
-                phi := sub(ONE, R_x)
-            }
-            phi = phi.ppf(); // Φ⁻¹(1-x).
+            int256 input = phi - int256(sdr);
+            input = input.cdf();
 
-            int256 cdf;
-            assembly {
-                cdf := sub(phi, sdr) // Φ⁻¹(1-x) - σ√τ.
-            }
-            cdf = cdf.cdf(); // Φ(Φ⁻¹(1-x) - σ√τ).
-
-            assembly {
-                R_y := add(sdiv(mul(stk, cdf), ONE), inv)
-            }
+            R_y = uint256(muliWad(int256(stk), input) + inv);
         } else {
-            assembly {
-                R_y := add(sdiv(mul(stk, sub(ONE, R_x)), ONE), inv)
-            }
+            R_y = uint256(muliWad(int256(stk), ONE - int256(R_x)) + inv);
         }
     }
 
@@ -151,51 +128,31 @@ library Invariant {
      * @custom:error Up to 1e-6. This an **approximated** "inverse" of the `getY` function.
      * @custom:source https://primitive.xyz/whitepaper
      */
-    function getX(
-        uint256 R_y,
-        uint256 stk,
-        uint256 vol,
-        uint256 tau,
-        int256 inv
-    ) internal pure returns (uint256 R_x) {
+    function getX(uint256 R_y, uint256 stk, uint256 vol, uint256 tau, int256 inv) internal pure returns (uint256 R_x) {
         // Short circuits because tau != 0 is more likely.
         if (tau != 0) {
-            uint256 sec;
-            assembly {
-                sec := div(mul(tau, ONE), YEAR) // Unit math: YEAR * SCALAR / YEAR = SCALAR.
-            }
+            uint256 sec = tau.divWadDown(uint256(YEAR));
 
-            uint256 sdr = sec.sqrt(); // √τ.
-            assembly {
-                sdr := mul(sdr, HALF_SCALAR) // Unit math: HALF_SCALAR * HALF_SCALAR = SCALAR.
-                sdr := div(mul(vol, sdr), ONE) // σ√τ.
-            }
+            uint256 sdr = sec.sqrt();
+            sdr = sdr * uint256(HALF_SCALAR);
+            sdr = vol.mulWadDown(sdr);
 
-            int256 phi;
-            assembly {
-                phi := sdiv(mul(add(R_y, inv), ONE), stk) // (y + k) / K.
-            }
+            int256 phi = diviWad(int256(R_y) + inv, int256(stk));
 
             if (phi < 0) revert OOB(); // Negative input for `ppf` is invalid.
             if (phi > ONE) revert OOB();
             if (phi == ONE) return 0; // `x = 1 - Φ(Φ⁻¹( 1 ) + σ√τ)` simplifies to  `x = 0`.
             if (phi == 0) return WAD; // `x = 1 - Φ(Φ⁻¹( 0 ) + σ√τ)` simplifies to `x = 1`.
 
-            phi = phi.ppf(); // Φ⁻¹( (y + k) / K ).
+            phi = phi.ppf();
 
-            int256 cdf;
-            assembly {
-                cdf := add(phi, sdr) // Φ⁻¹( (y + k) / K ) + σ√τ.
-            }
-            cdf = cdf.cdf(); // Φ(Φ⁻¹( (y + k) / K ) + σ√τ).
-
-            assembly {
-                R_x := sub(ONE, cdf)
-            }
+            int256 input = phi + int256(sdr);
+            input = input.cdf();
+            R_x = uint256(ONE - input);
         } else {
-            assembly {
-                R_x := sub(ONE, sdiv(mul(add(R_y, inv), ONE), stk))
-            }
+            int256 numerator = int256(R_y) + inv;
+            int256 denominator = int256(stk);
+            R_x = uint256(ONE - diviWad(numerator, denominator));
         }
     }
 
@@ -207,13 +164,11 @@ library Invariant {
      *
      * @custom:source https://rmm.eth.xyz
      */
-    function invariant(
-        uint256 R_y,
-        uint256 R_x,
-        uint256 stk,
-        uint256 vol,
-        uint256 tau
-    ) internal pure returns (int256 inv) {
+    function invariant(uint256 R_y, uint256 R_x, uint256 stk, uint256 vol, uint256 tau)
+        internal
+        pure
+        returns (int256 inv)
+    {
         uint256 y = getY(R_x, stk, vol, tau, inv); // `inv` is 0 because we are solving `inv`, aka `k`.
         assembly {
             inv := sub(R_y, y)
