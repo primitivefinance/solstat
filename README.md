@@ -2,7 +2,7 @@
 
 > This library is in beta. It's not ready for production.
 
-[![PRs Welcome](https://img.shields.io/badge/PRs-welcome-brightgreen.svg)](https://github.com/primitivefinance/portfolio#contributing) [![](https://dcbadge.vercel.app/api/server/primitive?style=flat)](https://discord.gg/primitive) [![Twitter Badge](https://badgen.net/badge/icon/twitter?icon=twitter&label)](https://twitter.com/primitivefi)
+![](https://visitor-badge.laobi.icu/badge?page_id=solstat) [![](https://github.com/primitivefinance/solstat/actions/workflows/ci.yaml/badge.svg)](https://github.com/primitivefinance/solstat/actions/workflows/ci.yaml) [![](https://dcbadge.vercel.app/api/server/primitive?style=flat)](https://discord.gg/primitive) [![Twitter Badge](https://badgen.net/badge/icon/twitter?icon=twitter&label)](https://twitter.com/primitivefi) 
 
 # SolStat
 
