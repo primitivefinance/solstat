@@ -111,7 +111,7 @@ library Invariant {
     /**
      * @notice Uses reserves `R_y` to compute reserves `R_x`.
      *
-     * @dev Computes `x` in `x = 1 - Φ(Φ⁻¹( (y + k) / K ) + σ√τ)`.
+     * @dev Computes `x` in `x = 1 - Φ(Φ⁻¹( (y - k) / K ) + σ√τ)`.
      * Not used in invariant function. Used for computing swap outputs.
      * Simplifies to `1 - ( (y + k) / K )` when time to expiry is zero.
      * Reverts if `R_y` is greater than one. Units are WAD.
@@ -150,7 +150,7 @@ library Invariant {
             input = input.cdf();
             R_x = uint256(ONE - input);
         } else {
-            int256 numerator = int256(R_y) + inv;
+            int256 numerator = int256(R_y) - inv;
             int256 denominator = int256(stk);
             R_x = uint256(ONE - diviWad(numerator, denominator));
         }
