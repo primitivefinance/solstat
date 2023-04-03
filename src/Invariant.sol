@@ -137,7 +137,7 @@ library Invariant {
             sdr = sdr * uint256(HALF_SCALAR);
             sdr = vol.mulWadDown(sdr);
 
-            int256 phi = diviWad(int256(R_y) + inv, int256(stk));
+            int256 phi = diviWad(int256(R_y) - inv, int256(stk));
 
             if (phi < 0) revert OOB(); // Negative input for `ppf` is invalid.
             if (phi > ONE) revert OOB();
@@ -150,7 +150,7 @@ library Invariant {
             input = input.cdf();
             R_x = uint256(ONE - input);
         } else {
-            int256 numerator = int256(R_y) - inv;
+            int256 numerator = int256(R_y) + inv;
             int256 denominator = int256(stk);
             R_x = uint256(ONE - diviWad(numerator, denominator));
         }
