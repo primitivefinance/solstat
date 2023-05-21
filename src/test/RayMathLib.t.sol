@@ -12,4 +12,13 @@ contract TestRayMathLib is Test {
         console.logInt(FixedPointMathLib.lnWad(3.5e18));
         assertEq(y, 1.25276296849536799568812062e27, "logfp-3.5e27");
     }
+
+    function testFuzz_sqrtfp(int256 x) public {
+        vm.assume(x > 0);
+
+        int256 y = RayMathLib.sqrtfp(x); // Units of 1e14
+        int256 y2 = int256(FixedPointMathLib.sqrt(uint256(x))); // Units of 1e9
+
+        assertEq(y / 1e14, y2, "sqrtfp");
+    }
 }
