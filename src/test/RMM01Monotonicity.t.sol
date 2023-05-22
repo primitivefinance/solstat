@@ -68,9 +68,7 @@ contract TestRMM01Monotonicity is Test {
     /// @param b The expected smaller value.
     /// @param precision The number of decimal places to check.
     /// @param message The message to display if the assertion fails.
-    function assertTruePrecisionNotStrictDecreasing(uint256 a, uint256 b, uint256 precision, string memory message)
-        internal
-    {
+    function assertGtePrecisionNotStrict(uint256 a, uint256 b, uint256 precision, string memory message) internal {
         // Amount to divide by to scale to precision.
         uint256 scalar = uint256(RAY) / precision;
 
@@ -92,7 +90,7 @@ contract TestRMM01Monotonicity is Test {
             console.log("remainder1", remainder1);
         }
 
-        assertTrue(b / scalar <= a / scalar, "b <= a");
+        assertTrue(a / scalar >= b / scalar, "a >= b");
     }
 
     /// @dev Asserts `b` is greater than or equal to `a` up to `precision` decimal places.
@@ -100,9 +98,7 @@ contract TestRMM01Monotonicity is Test {
     /// @param b The expected larger value.
     /// @param precision The number of decimal places to check.
     /// @param message The message to display if the assertion fails.
-    function assertTruePrecisionNotStrictIncreasing(uint256 a, uint256 b, uint256 precision, string memory message)
-        internal
-    {
+    function assertLtePrecisionNotStrict(uint256 a, uint256 b, uint256 precision, string memory message) internal {
         // Amount to divide by to scale to precision.
         uint256 scalar = uint256(RAY) / precision;
 
@@ -124,14 +120,14 @@ contract TestRMM01Monotonicity is Test {
             console.log("remainder1", remainder1);
         }
 
-        assertTrue(b / scalar >= a / scalar, "b >= a");
+        assertTrue(a / scalar <= b / scalar, "a <= b");
     }
 
     /// ("✨✨✨✨✨✨✨✨✨✨✨✨✨✨✨✨✨✨✨");
-    /// ("✨✨INVARIANT HAS INCREASING MONOTONICITY✨✨");
+    /// ("✨✨INVARIANT HAS DECREASING MONOTONICITY✨✨");
     /// ("✨✨✨✨✨✨✨✨✨✨✨✨✨✨✨✨✨✨✨");
     /// As x -> 1, y -> 0
-    function testFuzz_rmm_montonically_increasing(uint256 x1, uint256 strike, uint256 v, uint256 t) public {
+    function testFuzz_rmm_montonically_decreasing(uint256 x1, uint256 strike, uint256 v, uint256 t) public {
         x1 = bound(x1, DESIRED_PRECISION_SCALAR + 1, 1e27 - 2); // ray
         strike = bound(strike, DESIRED_PRECISION_SCALAR + 1, 1e27 - 2); // bounds between the lowest value on the desired precision scale and the upper bound of the domain.
         v = bound(v, 1, 1e7); // bps
@@ -141,8 +137,8 @@ contract TestRMM01Monotonicity is Test {
         v = v * 1e27 / 1e4; // Divides by BPS units which is 1e4, since 1e4 == 100% == 1.0 == 1e27 ray.
 
         int256 k = 0; // invariant
-        uint256 y1 = RMM01.getY(x1, strike, v, t, k);
-        uint256 y2 = RMM01.getY(x1 + 1, strike, v, t, k);
+        uint256 y1 = RMM01.getY(x1, strike, v, t, k); // x smaller, y larger
+        uint256 y2 = RMM01.getY(x1 + 1, strike, v, t, k); // x larger, y smaller
         vm.assume(y1 > 0);
 
         console.log("x1", x1);
@@ -150,15 +146,16 @@ contract TestRMM01Monotonicity is Test {
         console.log("x2", x1 + 1);
         console.log("y2", y2);
 
-        // Expect y1 is smaller & y2 is larger, or equal.
-        assertTruePrecisionNotStrictIncreasing(y1, y2, DESIRED_PRECISION, "y2 <= y1");
+        // As x gets larger, expect y to get smaller.
+        // Check that y2 is smaller than y1.
+        assertGtePrecisionNotStrict(y1, y2, DESIRED_PRECISION, "y1 >= y2");
     }
 
     /// ("✨✨✨✨✨✨✨✨✨✨✨✨✨✨✨✨✨✨✨");
-    /// ("✨✨INVARIANT HAS DECREASING MONOTONICITY✨✨");
+    /// ("✨✨INVARIANT HAS INCREASING MONOTONICITY✨✨");
     /// ("✨✨✨✨✨✨✨✨✨✨✨✨✨✨✨✨✨✨✨");
     /// As x -> 0, y -> K
-    function testFuzz_rmm_montonically_decreasing(uint256 x1, uint256 strike, uint256 v, uint256 t) public {
+    function testFuzz_rmm_montonically_increasing(uint256 x1, uint256 strike, uint256 v, uint256 t) public {
         x1 = bound(x1, DESIRED_PRECISION_SCALAR + 1, 1e27 - 2); // bounds between the lowest value on the desired precision scale and the upper bound of the domain.
         strike = bound(strike, DESIRED_PRECISION_SCALAR + 1, 1e27 - 2); // bounds between the lowest value on the desired precision scale and the upper bound of the domain.
         v = bound(v, 1, 1e7); // bps
@@ -168,8 +165,8 @@ contract TestRMM01Monotonicity is Test {
         v = v * 1e27 / 1e4; // Divides by BPS units which is 1e4, since 1e4 == 100% == 1.0 == 1e27 ray.
 
         int256 k = 0; // invariant
-        uint256 y1 = RMM01.getY(x1, strike, v, t, k);
-        uint256 y2 = RMM01.getY(x1 - 1, strike, v, t, k);
+        uint256 y1 = RMM01.getY(x1, strike, v, t, k); // x is larger, y is smaller
+        uint256 y2 = RMM01.getY(x1 - 1, strike, v, t, k); // x is smaller, y is larger
         vm.assume(y1 > 0);
 
         console.log("x1", x1);
@@ -177,7 +174,8 @@ contract TestRMM01Monotonicity is Test {
         console.log("x2", x1 - 1);
         console.log("y2", y2);
 
-        // Expect y1 is larger & y2 is smaller, or equal.
-        assertTruePrecisionNotStrictDecreasing(y1, y2, DESIRED_PRECISION, "y2 <= y1");
+        // As x gets smaller, expect y to get larger.
+        // Check that y1 is smaller than y2.
+        assertLtePrecisionNotStrict(y1, y2, DESIRED_PRECISION, "y1 <= y2");
     }
 }

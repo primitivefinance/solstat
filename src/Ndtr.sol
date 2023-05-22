@@ -211,7 +211,7 @@ library Ndtr {
         int256[] memory input1 = copy5(abi.decode(U, (int256[5])));
         // p = T[0] + T[1]*z + ... + T[4]*z^4
         // q = 1 + U[0]*z + ... + U[4]*z^5
-        // y = z * p / q
+        // y = x * p / q
         y = x * polevl(z, input0, 4) / p1evl(z, input1, 5);
 
         return y;
