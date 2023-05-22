@@ -2,7 +2,7 @@
 
 > This library is in beta. It's not ready for production.
 
-![](https://visitor-badge.laobi.icu/badge?page_id=solstat) [![](https://github.com/primitivefinance/solstat/actions/workflows/ci.yaml/badge.svg)](https://github.com/primitivefinance/solstat/actions/workflows/ci.yaml) [![](https://dcbadge.vercel.app/api/server/primitive?style=flat)](https://discord.gg/primitive) [![Twitter Badge](https://badgen.net/badge/icon/twitter?icon=twitter&label)](https://twitter.com/primitivefi) 
+![](https://visitor-badge.laobi.icu/badge?page_id=solstat) [![](https://github.com/primitivefinance/solstat/actions/workflows/ci.yaml/badge.svg)](https://github.com/primitivefinance/solstat/actions/workflows/ci.yaml) [![](https://dcbadge.vercel.app/api/server/primitive?style=flat)](https://discord.gg/primitive) [![Twitter Badge](https://badgen.net/badge/icon/twitter?icon=twitter&label)](https://twitter.com/primitivefi)
 
 # SolStat
 
@@ -25,6 +25,7 @@ To compute values using the gaussian.js library, you can use this commmand in th
 yarn cli --cdf {value}
 yarn cli --pdf {value}
 yarn cli --ppf {value}
+yarn cli --ndtr {value}
 ```
 
 ## Irrational Functions
