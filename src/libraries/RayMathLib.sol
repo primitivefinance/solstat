@@ -46,14 +46,14 @@ function divfp(uint256 a, uint256 b) pure returns (uint256) {
 
 /// @dev Returns the absolute value of a number.
 /// todo: do we need type checking?
-function absolute(int256 x) view returns (int256) {
+function absolute(int256 x) pure returns (int256) {
     if (x < 0) return -x;
     else return x;
 }
 
 /// @dev Up to 1E18 precision.
 /// todo: need more precise sqrt for 1e27 precision.
-function sqrtfp(int256 x) view returns (int256) {
+function sqrtfp(int256 x) pure returns (int256) {
     x = x / 1e9; // Scale from 1e27 -> 1e18.
 
     uint256 result = FixedPointMathLib.sqrt(uint256(x));
@@ -63,7 +63,16 @@ function sqrtfp(int256 x) view returns (int256) {
 }
 
 /// @dev todo
-function logfp(int256 x) view returns (int256) {
+function logfp(int256 x) pure returns (int256) {
     x = x / 1e9 + 1;
     return int256(FixedPointMathLib.lnWad(x)) * 1e9; // todo: fix, this is temp
+}
+
+/// @dev todo
+function expfp(int256 x) pure returns (int256) {
+    x = x / 1e9;
+
+    int256 result = FixedPointMathLib.expWad(x);
+
+    return result * 1e9; // todo: fix, this is temp, scale from 1E18 -> 1E27
 }

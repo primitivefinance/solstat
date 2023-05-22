@@ -151,7 +151,7 @@ library Ndtr {
             else return 0;
         }
 
-        z = FixedPointMathLib.expWad(z / 1e9) * 1e9;
+        z = expfp(z);
 
         if (x < RAY_EIGHT) {
             int256[] memory input0 = copy9(abi.decode(P, (int256[9])));
