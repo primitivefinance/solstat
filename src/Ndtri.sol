@@ -138,6 +138,8 @@ library Ndtri {
         int256 code = 1;
 
         y = y0;
+
+        // Use a different approximation if y > exp(-2).
         if (y > RAY_ONE - 0.13533528323661269189e27) {
             // 0.135... = exp(-2)
             y = RAY_ONE - y;
@@ -160,6 +162,9 @@ library Ndtri {
         // It also helps ensure that x will be a positive number because we're taking the square root.
         // The -2.0 * log(y) essentially gives the quantile of the exponential distribution,
         // which is then square rooted to approximate the quantile for the normal distribution.
+
+        // The precision of the sqrt output affects every value after this point.
+        // i.e. x0 will have precision up to the sqrt precision, and so on.
         x = sqrtfp(mulfp(-RAY_TWO, logfp(y))); // √(-2 * ln(y))
 
         // Part of a numerical approximation method (like a variant of Newton's method)
@@ -177,7 +182,7 @@ library Ndtri {
             x1 = z * polevl(z, P2_ARRAY, uint256(8)) / p1evl(z, Q2_ARRAY, uint256(8));
         }
 
-        x = x0 - y;
+        x = x0 - x1;
         if (code != 0) {
             x = -x;
         }

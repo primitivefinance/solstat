@@ -3,6 +3,7 @@ pragma solidity ^0.8.4;
 
 import "forge-std/Test.sol";
 import "../Ndtri.sol";
+import "../Gaussian.sol";
 
 /// @dev Hardcoded expected values computed manually using `normalcdlower` operation in https://keisan.casio.com/calculator
 contract TestNdtri is Test {
@@ -10,7 +11,23 @@ contract TestNdtri is Test {
 
     /// @notice Compares two in256 values up to a precision with a base of RAY.
     function assertEqPrecision(int256 a, int256 b, int256 precision, string memory message) internal {
-        assertEq(a * precision / RAY, b * precision / RAY, message);
+        // Gets the digits passed the precision end point.
+        uint256 remainder0 = mulmod(uint256(a), uint256(precision), uint256(RAY));
+        uint256 remainder1 = mulmod(uint256(b), uint256(precision), uint256(RAY));
+
+        // Add one to the remainder to round up, in the case it is 99...99.
+        remainder0++;
+        remainder1++;
+
+        // Converts units to precision.
+        a = a * precision / RAY;
+        b = b * precision / RAY;
+
+        // Rounds up if remainder is >= 0.5.
+        //if (int256(remainder0) >= RAY_HALF) a++;
+        //if (int256(remainder1) >= RAY_HALF) b++;
+
+        assertEq(a, b, message);
     }
 
     /// @dev Tests various inputs on the domain [0, 1], where input is a probability between 0 and 1.
@@ -27,12 +44,20 @@ contract TestNdtri is Test {
         assertEqPrecision(
             Ndtri.ndtri(RAY * 11 / 85), int256(-1.1291761577077979287868872e27), NDTRI_ACCURACY, "ndtri-0.129412"
         );
+
+        assertEqPrecision(
+            Ndtri.ndtri(729329433526774616220000000),
+            int256(0.610786196335546300516717471e27),
+            NDTRI_ACCURACY,
+            "ndtri-0.729329"
+        );
     }
 
     /// Starting at 1e27, decrements by atleast RAY / NDTRI_ACCURACY = 1e9, since thats the lowest unit
     /// that has precision.
     function test_ndtri_near_one() public {
         int256 decrement = RAY / NDTRI_ACCURACY;
+        console.logInt(RAY - decrement);
         assertEqPrecision(
             Ndtri.ndtri(RAY - decrement),
             int256(8.75729034878231506388112862e27),
@@ -99,7 +124,7 @@ contract TestNdtri is Test {
     int256 constant UPPER_NDTRI_BOUND = RAY - 1 - 1 - 1; // Bound is RAY - 1, but we want to increase by 1 so need at least 2
     int256 constant LOWER_NDTRI_BOUND = 1 + 1 + 1; // Bound is 1, but we want to decrease by 1, so need at least 2
 
-    /// note: fails strictly at values above abs(1), i.e. a == b
+    /// note: strict passes... does it pass with 10k fuzz runs though?
     function testFuzz_ndtri_monotonically_increasing(int256 x) public {
         x = bound(x, LOWER_NDTRI_BOUND, UPPER_NDTRI_BOUND);
 
@@ -108,10 +133,10 @@ contract TestNdtri is Test {
         console.logInt(a);
         console.logInt(b);
 
-        assertTrue(a <= b, "ndtri-monotonically-increasing"); // note: not strict?
+        assertTrue(a < b, "ndtri-monotonically-increasing");
     }
 
-    /// note: fails strictly at values above abs(1), i.e. a == b
+    /// note: strict passes... does it pass with 10k fuzz runs though?
     function testFuzz_ndtri_monotonically_decreasing(int256 x) public {
         x = bound(x, LOWER_NDTRI_BOUND, UPPER_NDTRI_BOUND);
 
@@ -120,7 +145,7 @@ contract TestNdtri is Test {
         console.logInt(a);
         console.logInt(b);
 
-        assertTrue(a >= b, "ndtri-monotonically-decreasing"); // note: not strict?
+        assertTrue(a > b, "ndtri-monotonically-decreasing");
     }
 
     function test_ndtri_equals_one_reverts() public {
@@ -142,4 +167,33 @@ contract TestNdtri is Test {
         vm.expectRevert(Ndtri.MaxNumError.selector);
         Ndtri.ndtri(0 - 1);
     }
+
+    function test_ndtri_lower() public {
+        assertEqPrecision(Ndtri.ndtri(0.1e27), int256(-1.28155156554460046696510332e27), NDTRI_ACCURACY, "ndtri-0.1");
+    }
+
+    /* /// todo: update this test... it will fail because ndtri is better than the reference, so not equal!
+    function testFuzz_ndtri_reference(int256 x) public {
+        x = bound(x, 2, 1e27 - 2);
+        int256 y0 = Ndtri.ndtri(x);
+        x /= 1e9;
+        int256 y1 = Gaussian.ppf(x);
+        console.logInt(y0);
+        console.logInt(y1);
+
+        assertEqPrecision(y0, y1 * 1e9, 1e9, "ndtri-reference");
+    }
+
+    /// todo: update this test... it will fail because ndtri is better than the reference, so not equal!
+    function testFuzz_ndtri_refrence_below_exp2(int256 x) public {
+        x = bound(x, 0.13533528323661269189e27 + 1, 1e27 - 0.13533528323661269189e27);
+
+        int256 y0 = Ndtri.ndtri(x);
+        x /= 1e9;
+        int256 y1 = Gaussian.ppf(x);
+        console.logInt(y0);
+        console.logInt(y1);
+
+        assertEqPrecision(y0, y1 * 1e9, 1e9, "ndtri-reference-below-exp2");
+    } */
 }
