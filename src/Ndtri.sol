@@ -20,6 +20,12 @@ library Ndtri {
 
     error MaxNumError();
 
+    ////////////////
+    // Constants  //
+    ////////////////
+
+    int256 constant RAY_EXPNEG2 = 0.135335283236612691893999494e27;
+
     //////////////////////////////////////////////
     // Approximation for 0 <= |y - 0.5| <= 3/8  //
     //////////////////////////////////////////////
@@ -140,13 +146,13 @@ library Ndtri {
         y = y0;
 
         // Use a different approximation if y > exp(-2).
-        if (y > RAY_ONE - 0.13533528323661269189e27) {
+        if (y > RAY_ONE - RAY_EXPNEG2) {
             // 0.135... = exp(-2)
             y = RAY_ONE - y;
             code = 0;
         }
 
-        if (y > 0.13533528323661269189e27) {
+        if (y > RAY_EXPNEG2) {
             int256[] memory P0_ARRAY = copy5(abi.decode(P0, (int256[5])));
             int256[] memory Q0_ARRAY = copy8(abi.decode(Q0, (int256[8])));
             y = y - RAY_HALF;

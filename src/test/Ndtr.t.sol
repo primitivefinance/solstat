@@ -20,10 +20,7 @@ contract TestNdtr is Test {
         uint256 remainder0 = mulmod(uint256(a), uint256(precision), uint256(RAY));
         uint256 remainder1 = mulmod(uint256(b), uint256(precision), uint256(RAY));
 
-        // Add one to the remainder to round up, in the case it is 99...99.
-        remainder0++;
-        remainder1++;
-
+        // For debugging...
         if (false) {
             console.log("===== RAW AMOUNTS =====");
             console.logInt(a);
@@ -285,16 +282,4 @@ contract TestNdtr is Test {
     function test_erfc_zero_input_returns_one() public {
         assertEq(Ndtr.erfc(0), RAY);
     }
-
-    /// todo: update this test... it will fail because ndtr is better than the reference, so not equal!
-    /* function testFuzz_ndtr_reference(int256 x) public {
-        x = bound(x, -int256(2 * 1e27), int256(2 * 1e27));
-        int256 y0 = Ndtr.ndtr(x);
-        x /= 1e9;
-        int256 y1 = Gaussian.cdf(x);
-        console.logInt(y0);
-        console.logInt(y1);
-
-        assertApproxEqPrecision(y0, y1 * 1e9, 1e9, "ndtr-reference");
-    } */
 }
