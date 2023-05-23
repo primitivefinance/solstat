@@ -1,47 +1,12 @@
 // SPDX-License-Identifier: GPL-3.0-only
 pragma solidity ^0.8.4;
 
-import "forge-std/Test.sol";
+import "../test/utils/ExtendedAssertionsTest.sol";
 import "../Ndtri.sol";
 import "../Gaussian.sol";
 
 /// @dev Hardcoded expected values computed manually using `normalcdlower` operation in https://keisan.casio.com/calculator
-contract TestNdtri is Test {
-    int256 constant NDTRI_ACCURACY = 1e18;
-    uint256 constant MAX_ROUNDING_DELTA = 1;
-
-    /// @notice Compares two in256 values up to a precision with a base of RAY.
-    /// @dev IMPORTANT! Asserts `a` and `b` are within 1 wei up to `precision`.
-    function assertApproxEqPrecision(int256 a, int256 b, int256 precision, string memory message) internal {
-        // Amount to divide by to scale to precision.
-        int256 scalar = RAY / precision;
-
-        // Gets the digits passed the precision end point.
-        uint256 remainder0 = mulmod(uint256(a), uint256(precision), uint256(RAY));
-        uint256 remainder1 = mulmod(uint256(b), uint256(precision), uint256(RAY));
-
-        // For debugging...
-        if (false) {
-            console.log("===== RAW AMOUNTS =====");
-            console.logInt(a);
-            console.logInt(b);
-
-            console.log("===== SCALED AMOUNTS =====");
-            console.logInt(a / scalar);
-            console.logInt(b / scalar);
-
-            console.log("===== REMAINDERS =====");
-            console.log("remainder0", remainder0);
-            console.log("remainder1", remainder1);
-        }
-
-        // Converts units to precision.
-        a = a * precision / RAY;
-        b = b * precision / RAY;
-
-        assertApproxEqAbs(a, b, MAX_ROUNDING_DELTA, message);
-    }
-
+contract TestNdtri is ExtendedAssertionsTest {
     /// @dev Tests various inputs on the domain (0, 1), where input is a probability between 0 and 1.
     function test_ndtri() public {
         assertApproxEqPrecision(Ndtri.ndtri(RAY / 2), int256(0), NDTRI_ACCURACY, "ndtri-0.5");

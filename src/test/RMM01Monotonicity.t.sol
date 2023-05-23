@@ -1,7 +1,7 @@
 // SPDX-License-Identifier: GPL-3.0-only
 pragma solidity ^0.8.4;
 
-import "forge-std/Test.sol";
+import "../test/utils/ExtendedAssertionsTest.sol";
 import "../Ndtr.sol";
 import "../Ndtri.sol";
 
@@ -57,105 +57,7 @@ library RMM01 {
     }
 }
 
-contract TestRMM01Monotonicity is Test {
-    bool DEBUG = false;
-
-    uint256 constant MAX_ROUNDING_DELTA = 1;
-    uint256 constant DESIRED_PRECISION = 1e18;
-    uint256 constant DESIRED_PRECISION_SCALAR = 1e9; // Desired precision is 1e18, therefore scalar is 1e27 / 1e18 = 1e9
-
-    /// @notice Compares two in256 values up to a precision with a base of RAY.
-    /// @dev IMPORTANT! Asserts `a` and `b` are within 1 wei up to `precision`.
-    function assertApproxEqPrecision(uint256 a, uint256 b, uint256 precision, string memory message) internal {
-        // Amount to divide by to scale to precision.
-        uint256 scalar = uint256(RAY) / precision;
-
-        // Gets the digits passed the precision end point.
-        uint256 remainder0 = mulmod(uint256(a), uint256(precision), uint256(RAY));
-        uint256 remainder1 = mulmod(uint256(b), uint256(precision), uint256(RAY));
-
-        // For debugging...
-        if (false) {
-            console.log("===== RAW AMOUNTS =====");
-            console.log("a", a);
-            console.log("b", b);
-
-            console.log("===== SCALED AMOUNTS =====");
-            console.log("a / scalar", a / scalar);
-            console.log("b / scalar", b / scalar);
-
-            console.log("===== REMAINDERS =====");
-            console.log("remainder0", remainder0);
-            console.log("remainder1", remainder1);
-        }
-
-        // Converts units to precision.
-        a = a * precision / uint256(RAY);
-        b = b * precision / uint256(RAY);
-
-        assertApproxEqAbs(a, b, MAX_ROUNDING_DELTA, message);
-    }
-
-    /// @dev Asserts `a` is greater than or equal to `b` up to `precision` decimal places.
-    /// @param a The expected larger value.
-    /// @param b The expected smaller value.
-    /// @param precision The number of decimal places to check.
-    /// @param message The message to display if the assertion fails.
-    function assertGtePrecisionNotStrict(uint256 a, uint256 b, uint256 precision, string memory message) internal {
-        // Amount to divide by to scale to precision.
-        uint256 scalar = uint256(RAY) / precision;
-
-        // Quantities beyond the radix point at `precision`. These values are truncated before being checked in this assertion.
-        uint256 remainder0 = mulmod(uint256(a), uint256(precision), uint256(RAY));
-        uint256 remainder1 = mulmod(uint256(b), uint256(precision), uint256(RAY));
-
-        if (DEBUG) {
-            console.log("===== RAW AMOUNTS =====");
-            console.log("a", a);
-            console.log("b", b);
-
-            console.log("===== SCALED AMOUNTS =====");
-            console.log("a", a / scalar);
-            console.log("b", b / scalar);
-
-            console.log("===== REMAINDERS =====");
-            console.log("remainder0", remainder0);
-            console.log("remainder1", remainder1);
-        }
-
-        assertTrue(a / scalar >= b / scalar, "a >= b");
-    }
-
-    /// @dev Asserts `b` is greater than or equal to `a` up to `precision` decimal places.
-    /// @param a The expected smaller value.
-    /// @param b The expected larger value.
-    /// @param precision The number of decimal places to check.
-    /// @param message The message to display if the assertion fails.
-    function assertLtePrecisionNotStrict(uint256 a, uint256 b, uint256 precision, string memory message) internal {
-        // Amount to divide by to scale to precision.
-        uint256 scalar = uint256(RAY) / precision;
-
-        // Quantities beyond the radix point at `precision`. These values are truncated before being checked in this assertion.
-        uint256 remainder0 = mulmod(uint256(a), uint256(precision), uint256(RAY));
-        uint256 remainder1 = mulmod(uint256(b), uint256(precision), uint256(RAY));
-
-        if (DEBUG) {
-            console.log("===== RAW AMOUNTS =====");
-            console.log("a", a);
-            console.log("b", b);
-
-            console.log("===== SCALED AMOUNTS =====");
-            console.log("a", a / scalar);
-            console.log("b", b / scalar);
-
-            console.log("===== REMAINDERS =====");
-            console.log("remainder0", remainder0);
-            console.log("remainder1", remainder1);
-        }
-
-        assertTrue(a / scalar <= b / scalar, "a <= b");
-    }
-
+contract TestRMM01Monotonicity is ExtendedAssertionsTest {
     /// ("✨✨✨✨✨✨✨✨✨✨✨✨✨✨✨✨✨✨✨");
     /// ("✨✨INVARIANT HAS DECREASING MONOTONICITY✨✨");
     /// ("✨✨✨✨✨✨✨✨✨✨✨✨✨✨✨✨✨✨✨");
