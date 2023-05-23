@@ -282,4 +282,20 @@ contract TestNdtr is Test {
     function test_erfc_zero_input_returns_one() public {
         assertEq(Ndtr.erfc(0), RAY);
     }
+
+    function testFuzz_ndtr_input_precision(int256 x) public {
+        x = bound(x, -10e27, 10e27); // Bound between [-10, 10] in units of 1E27.
+        vm.assume(absolute(x) > 1e9); // Since we are dividing by 1E9... need to have at least 1 in the input, so x has to be gte 1E9.
+
+        // Assume we want to use `ndtr()` but have an input with WAD units (1E18).
+        // The input can be scaled to match the units of 1E27.
+        // But do we lose precision in the output?
+        int256 outputWith1E27Input = Ndtr.ndtr(x);
+        x = x / 1e9; // Scale down to 1E18.
+        x = x * 1e9; // Scale back up to 1E27, losing all precision past the 1E18 radix point.
+        int256 outputWith1E18Input = Ndtr.ndtr(x);
+
+        // Asserts that the outputs scaled to 1E18 are equal up to 1E18 precision, regardless of the input precision.
+        assertApproxEqPrecision(outputWith1E27Input, outputWith1E18Input, 1e18, "ndtr-input-precision");
+    }
 }

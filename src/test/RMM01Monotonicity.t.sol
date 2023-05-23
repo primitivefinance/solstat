@@ -60,8 +60,41 @@ library RMM01 {
 contract TestRMM01Monotonicity is Test {
     bool DEBUG = false;
 
+    uint256 constant MAX_ROUNDING_DELTA = 1;
     uint256 constant DESIRED_PRECISION = 1e18;
     uint256 constant DESIRED_PRECISION_SCALAR = 1e9; // Desired precision is 1e18, therefore scalar is 1e27 / 1e18 = 1e9
+
+    /// @notice Compares two in256 values up to a precision with a base of RAY.
+    /// @dev IMPORTANT! Asserts `a` and `b` are within 1 wei up to `precision`.
+    function assertApproxEqPrecision(uint256 a, uint256 b, uint256 precision, string memory message) internal {
+        // Amount to divide by to scale to precision.
+        uint256 scalar = uint256(RAY) / precision;
+
+        // Gets the digits passed the precision end point.
+        uint256 remainder0 = mulmod(uint256(a), uint256(precision), uint256(RAY));
+        uint256 remainder1 = mulmod(uint256(b), uint256(precision), uint256(RAY));
+
+        // For debugging...
+        if (false) {
+            console.log("===== RAW AMOUNTS =====");
+            console.log("a", a);
+            console.log("b", b);
+
+            console.log("===== SCALED AMOUNTS =====");
+            console.log("a / scalar", a / scalar);
+            console.log("b / scalar", b / scalar);
+
+            console.log("===== REMAINDERS =====");
+            console.log("remainder0", remainder0);
+            console.log("remainder1", remainder1);
+        }
+
+        // Converts units to precision.
+        a = a * precision / uint256(RAY);
+        b = b * precision / uint256(RAY);
+
+        assertApproxEqAbs(a, b, MAX_ROUNDING_DELTA, message);
+    }
 
     /// @dev Asserts `a` is greater than or equal to `b` up to `precision` decimal places.
     /// @param a The expected larger value.
@@ -127,7 +160,7 @@ contract TestRMM01Monotonicity is Test {
     /// ("✨✨INVARIANT HAS DECREASING MONOTONICITY✨✨");
     /// ("✨✨✨✨✨✨✨✨✨✨✨✨✨✨✨✨✨✨✨");
     /// As x -> 1, y -> 0
-    function testFuzz_rmm_montonically_decreasing(uint256 x1, uint256 strike, uint256 v, uint256 t) public {
+    function testFuzz_getY_montonically_decreasing(uint256 x1, uint256 strike, uint256 v, uint256 t) public {
         x1 = bound(x1, DESIRED_PRECISION_SCALAR + 1, 1e27 - 2); // ray
         strike = bound(strike, DESIRED_PRECISION_SCALAR + 1, 1e27 - 2); // bounds between the lowest value on the desired precision scale and the upper bound of the domain.
         v = bound(v, 1, 1e7); // bps
@@ -155,7 +188,7 @@ contract TestRMM01Monotonicity is Test {
     /// ("✨✨INVARIANT HAS INCREASING MONOTONICITY✨✨");
     /// ("✨✨✨✨✨✨✨✨✨✨✨✨✨✨✨✨✨✨✨");
     /// As x -> 0, y -> K
-    function testFuzz_rmm_montonically_increasing(uint256 x1, uint256 strike, uint256 v, uint256 t) public {
+    function testFuzz_getY_montonically_increasing(uint256 x1, uint256 strike, uint256 v, uint256 t) public {
         x1 = bound(x1, DESIRED_PRECISION_SCALAR + 1, 1e27 - 2); // bounds between the lowest value on the desired precision scale and the upper bound of the domain.
         strike = bound(strike, DESIRED_PRECISION_SCALAR + 1, 1e27 - 2); // bounds between the lowest value on the desired precision scale and the upper bound of the domain.
         v = bound(v, 1, 1e7); // bps
@@ -177,5 +210,27 @@ contract TestRMM01Monotonicity is Test {
         // As x gets smaller, expect y to get larger.
         // Check that y1 is smaller than y2.
         assertLtePrecisionNotStrict(y1, y2, DESIRED_PRECISION, "y1 <= y2");
+    }
+
+    function testFuzz_getY_input_precision(uint256 x1, uint256 strike, uint256 v, uint256 t) public {
+        x1 = bound(x1, DESIRED_PRECISION_SCALAR + 1, 1e27 - 2); // bounds between the lowest value on the desired precision scale and the upper bound of the domain.
+        strike = bound(strike, DESIRED_PRECISION_SCALAR + 1, 1e27 - 2); // bounds between the lowest value on the desired precision scale and the upper bound of the domain.
+        v = bound(v, 1, 1e7); // bps
+        t = bound(t, 1, 500 days); // seconds
+
+        // scales v up to ray since we bound by a small range in units of bps, since this is a realistic range
+        v = v * 1e27 / 1e4; // Divides by BPS units which is 1e4, since 1e4 == 100% == 1.0 == 1e27 ray.
+
+        int256 k = 0; // invariant
+        // Assume we want to use `ndtr()` but have an input with WAD units (1E18).
+        // The input can be scaled to match the units of 1E27.
+        // But do we lose precision in the output?
+        uint256 outputWith1E27Input = RMM01.getY(x1, strike, v, t, k);
+        x1 = x1 / 1e9; // Scale down to 1E18.
+        x1 = x1 * 1e9; // Scale back up to 1E27, losing all precision past the 1E18 radix point.
+        uint256 outputWith1E18Input = RMM01.getY(x1, strike, v, t, k);
+
+        // Asserts that the outputs scaled to 1E18 are equal up to 1E18 precision, regardless of the input precision.
+        assertApproxEqPrecision(outputWith1E27Input, outputWith1E18Input, 1e18, "getY-input-precision");
     }
 }
