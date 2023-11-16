@@ -111,7 +111,7 @@ library Invariant {
     /**
      * @notice Uses reserves `R_y` to compute reserves `R_x`.
      *
-     * @dev Computes `x` in `x = 1 - Φ(Φ⁻¹( (y + k) / K ) + σ√τ)`.
+     * @dev Computes `x` in `x = 1 - Φ(Φ⁻¹( (y - k) / K ) + σ√τ)`.
      * Not used in invariant function. Used for computing swap outputs.
      * Simplifies to `1 - ( (y + k) / K )` when time to expiry is zero.
      * Reverts if `R_y` is greater than one. Units are WAD.
@@ -137,7 +137,7 @@ library Invariant {
             sdr = sdr * uint256(HALF_SCALAR);
             sdr = vol.mulWadDown(sdr);
 
-            int256 phi = diviWad(int256(R_y) + inv, int256(stk));
+            int256 phi = diviWad(int256(R_y) - inv, int256(stk));
 
             if (phi < 0) revert OOB(); // Negative input for `ppf` is invalid.
             if (phi > ONE) revert OOB();
